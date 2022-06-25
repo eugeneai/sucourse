@@ -1,5 +1,7 @@
 ALL = {}
 
+print("\n\n-------->", _VERSION, "\n\n")
+
 Topics = {
    topics = {},
    totals = {
@@ -34,16 +36,12 @@ end
 
 Topic = {}
 
-function Topic:new(index, title, content, label)
-   local t = {
-      index=index,
-      title=title,
-      content=content,
-      label=label
-   }
-   print(index, title, content, label)
-   -- t.__index = self
-   -- return setmetatable(t, self)
+function Topic:new(o)
+   o = o or {}
+   o.topicName = o.topicName or "Тема"
+   self.__index = self
+   setmetatable(o, self)
+   return o
 end
 
 function Topic:setTerm(term)
@@ -59,6 +57,15 @@ function Topic:hours(lec, lab, pra, per, con)
    self.con = con
 end
 
+function Topic:print()
+   t=self
+   print(t.index, t.title, t.content, t.label)
+end
+
+
+function Topic:setTopicName(name)
+   self.topicName=name
+end
 
 ALL.Topic = Topic
 ALL.Topics = Topics

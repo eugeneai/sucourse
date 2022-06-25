@@ -154,13 +154,13 @@
 \end{rdfctx}
 }
 
-
+\NewDocumentCommand{\topicname}{}{Тема} % Раздел
 
 \NewDocumentEnvironment{topic}{O{}m}
 {
   \refstepcounter{syllabus@topic}
   \begin{rdfctx}{\rdfsetctx{item}{list ^schema:member !wpdd:ListItem !wpdd:Topic  \end{rdfctx}}}
-  {\bfseries Тема~\rdf{item dcterms:identifier}{\protect\thetopic}.~\rdf{item rdfs:label}{#2}}\par
+  {\bfseries \topicname\ \rdf{item dcterms:identifier}{\protect\thetopic}.~\rdf{item rdfs:label}{#2}}\par
   \let\oldtheenumi=\theenumi
   \RenewDocumentCommand{\theenumi}{}{\thetopic.\arabic{enumi}}
 }
