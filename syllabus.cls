@@ -143,18 +143,51 @@
 
 \newcounter{syllabus@topic}
 
-\ProvideDocumentCommand{\thetopic}{}{\arabic{syllabus@topic}}
+% \NewDocumentCommand{\thetopic}{}{\arabic{syllabus@topic}}
+\def\thetopic{\arabic{syllabus@topic}}
+\NewDocumentCommand{\TopicControl}{m}{
+  \luadirect{syll.Topics:setControl{control="#1"}}
+}
+\NewDocumentEnvironment{SyllabusValidation}{m}
+{
+  \begingroup
+  \bfseries \color{red} #1:
+  \normalfont
+  \begin{enumerate}
+}
+{
+  \end{enumerate}
+  \endgroup
+}
 
 \NewDocumentEnvironment{topics}{O{}}
 {
-\setcounter{syllabus@topic}{0}
-\begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:TopicList !wpdd:ItemList}}
+  \setcounter{syllabus@topic}{0}
+  \keys_set:nn { syllabus/topics } { #1 }
+  \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:TopicList !wpdd:ItemList}}
 }
 {
+\luadirect{syll.Topics:validation()}
 \end{rdfctx}
 }
 
-\NewDocumentCommand{\topicname}{}{Тема} % Раздел
+\keys_define:nn { syllabus/topics }
+{
+  lec .code:n = \luadirect{syll.Topics:setControl({lec=#1})},
+  lec .default:n = nil,
+  lab .code:n = \luadirect{syll.Topics:setControl({lab=#1})},
+  lab .default:n = nil,
+  sem .code:n = \luadirect{syll.Topics:setControl({sem=#1})},
+  sem .default:n = nil,
+  per .code:n = \luadirect{syll.Topics:setControl({per=#1})},
+  per .default:n = nil,
+  control .code:n = \luadirect{syll.Topics.control='\luastring{#1}'},
+  control .default:n = nil,
+  term .code:n = \luadirect{syll.Topics.term=#1},
+  term .default:n = nil,
+}
+
+\def\topicname{Тема} % Раздел
 
 \NewDocumentEnvironment{topic}{O{}m}
 {
@@ -163,10 +196,19 @@
   {\bfseries \topicname\ \rdf{item dcterms:identifier}{\protect\thetopic}.~\rdf{item rdfs:label}{#2}}\par
   \let\oldtheenumi=\theenumi
   \RenewDocumentCommand{\theenumi}{}{\thetopic.\arabic{enumi}}
+  % \l__syllabus_new_topic{\luastring{\thetopic}}{#2}{#1}
+  \directlua{
+    topic = syll.Topic:new{index=\thetopic, title='#2', kw={#1}}
+    syll.Topics:addTopic(topic)
+  }
 }
 {
   \let\theenumi=\oldtheenumi
   \let\oldtheenumi=\relax
+  % \luadirect{
+  %   topic = syll.Topics:getTopic(\thetopic)
+  %   syll.pt(topic, 'TOPIC:')
+  %   topic.sprintTitle('emph')}
   \end{rdfctx}
 }
 
