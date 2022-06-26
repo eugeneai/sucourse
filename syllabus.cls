@@ -190,20 +190,21 @@
 
 \def\topicname{Тема} % Раздел
 
-\NewDocumentEnvironment{topic}{O{}m}
+\NewDocumentEnvironment{topic}{O{}mb}
 {
   \refstepcounter{syllabus@topic}
   \begin{rdfctx}{\rdfsetctx{item}{list ^schema:member !wpdd:ListItem !wpdd:Topic  \end{rdfctx}}}
   {\bfseries \topicname\ \rdf{item dcterms:identifier}{\protect\thetopic}.~\rdf{item rdfs:label}{#2}}\par
   \let\oldtheenumi=\theenumi
   \RenewDocumentCommand{\theenumi}{}{\thetopic.\arabic{enumi}}
-  % \directlua{
-  %   topic = syll.Topic:new{index=\thetopic, title='#2', kw={#1}}
-  %
-  % }
-  \directlua{ syll.topic = syll.Topic:new{index=\thetopic, title='#2'}}
+  \directlua{
+    syll.topic = syll.Topic:new{index=\thetopic, title='#2'}
+  }
   \keys_set:nn { syllabus/topic } { #1 }
-  \directlua{syll.Topics:addTopic(syll.topic)}
+  \directlua{
+    syll.Topics:addTopic(syll.topic)
+  }
+  #3
 }
 {
   \let\theenumi=\oldtheenumi
@@ -231,9 +232,83 @@
   term .default:n = nil
 }
 
-\NewDocumentCommand\syllabuscontentbytopics{}{SYLLABUS HERE\par}
+% \def\workname{Лабораторная работа}
+\def\workheaderstyle{\normalfont\em}
+\def\worktitlestyle{\normalfont}
+\newcounter{syllabus@work}
+\def\thework{\arabic{syllabus@work}}
 
+\NewDocumentEnvironment{rdfenv}{O{}m}
+{
 
+}
+{
+
+}
+
+\NewDocumentEnvironment{works}{O{}}
+{
+  \setcounter{syllabus@work}{0}
+  \def\workname{Работа студента}
+  \luadirect{
+    syll.Works:clear()
+  }
+  \keys_set:nn { syllabus/works } { #1 }
+  \luadirect{
+    syll.Works:sprintWorkName()
+  }
+  \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:ExampleList !wpdd:CurrentAttestation !wpdd:ItemList}}
+  \def\syllabus@worktype{wpdd:LaboratoryWork}
+}
+{
+  \luadirect{
+    syll.Works:validation()
+  }
+\end{rdfctx}
+}
+
+\keys_define:nn { syllabus/works }
+{
+  comp .code:n = \luadirect{syll.Works.comp=\luastring{#1}},
+  comp .default:n = nil,
+  type .code:n = \luadirect{syll.Works:setType('#1')},
+  type .default:n = lab,
+  name .code:n = \luadirect{local name='#1'; syll.Works:setName(name) },
+  name .default:n = nil,
+  term .code:n = \luadirect{local term=#1; syll.Works.term = term or syll.Topics.term},
+  term .default:n = nil
+}
+
+\NewDocumentEnvironment{work}{O{}m}
+{
+  \refstepcounter{syllabus@work}
+  \luadirect{
+    syll.work = syll.Work:new{index=\thework, title=[[#2]]}
+  }
+  \keys_set:nn { syllabus/work } { #1 }
+  \luadirect{
+    syll.Works:addWork(syll.work)
+  }
+  \begin{rdfenv}{list ^schema:member !wpdd:ListItem !wpdd:Example \luadirect{syll.Works:sprintRDFType()}}
+  \paragraph{{\workheaderstyle \workname\ \thework.}~{\worktitlestyle #2}}
+}
+{
+\end{rdfenv}\par\vspace{1em}
+}
+
+\keys_define:nn { syllabus/work }
+{
+  comp .code:n = \luadirect{local comp=[[#1]]; syll.work:setComp(comp)},
+  comp .default:n = nil,
+  hours .code:n = \luadirect{syll.work.hours=#1},
+  hours .default:n = nil,
+  topics .code:n = \luadirect{local topics=[[1]]; syll.work:setTopics(topics)},
+  topics .default:n = {},
+  label .code:n = \luadirect{syll.work.label=\luastring{#1}},
+  label .default:n = nil,
+  term .code:n = \luadirect{local term=#1; syll.work.term=term or syll.Works.term or syll.Topics.term},
+  term .default:n = nil
+}
 
 \AtEndPreamble{
 %
