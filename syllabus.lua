@@ -48,17 +48,17 @@ end
 
 function Topics:addTopic(topic)
    table.insert(self.topics, topic)
-   if topic.label then
-      l = self.labels -- or {}
+   l = self.labels
+   if topic.label ~= nil then
       l[topic.label] = topic
-      self.labels = l
    end
+   l[topic.index] = topic
    t = self.totals
    t.lec = t.lec + topic.lec
    t.lab = t.lab + topic.lab
    t.sem = t.sem + topic.sem
    t.per = t.per + topic.per
-   pt(topic, "Added")
+   -- pt(topic, "Added")
    -- pt(t, "Accumulated")
 end
 
@@ -119,15 +119,22 @@ function Topics:validation()
    end
 end
 
+function Topics:print()
+   pt(self, "TOPICS:")
+   pt(self.totals, "TOTALS:")
+   pt(self.totalsControl, "CONTROL:")
+   pt(self.labels, "LABELS:")
+end
+
 Topic = {}
 
 function Topic:new(o)
    o = o or error("need a filled in object")
    o.topicName = o.topicName or "Тема"
    update(o, __hours)
-   update(o, o.kw)
-   pt(o, "OOOOO")
-   pt(o.kw, "KW")
+   if o.kw then
+      update(o, o.kw)
+   end
    o.kw = nil
    self.__index = self
    setmetatable(o, self)
@@ -148,6 +155,7 @@ function Topic:print()
 end
 
 function Topic:sprintTitle(emph)
+   -- pt(self, "SELF:")
    tex.sprint("\\topicname~\\thetopic.~")
    if emph then
       tex.sprint("\\" .. emph .. "{")
@@ -156,6 +164,7 @@ function Topic:sprintTitle(emph)
    if emph then
       tex.sprint("}")
    end
+   tex.sprint("\\par")
 end
 
 ALL.Topic = Topic

@@ -167,7 +167,8 @@
   \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:TopicList !wpdd:ItemList}}
 }
 {
-\luadirect{syll.Topics:validation()}
+  \luadirect{syll.Topics:validation()}
+  % \luadirect{syll.Topics:print()}
 \end{rdfctx}
 }
 
@@ -181,7 +182,7 @@
   sem .default:n = nil,
   per .code:n = \luadirect{syll.Topics:setControl({per=#1})},
   per .default:n = nil,
-  control .code:n = \luadirect{syll.Topics.control='\luastring{#1}'},
+  control .code:n = \luadirect{syll.Topics.control=\luastring{#1}},
   control .default:n = nil,
   term .code:n = \luadirect{syll.Topics.term=#1},
   term .default:n = nil,
@@ -196,22 +197,39 @@
   {\bfseries \topicname\ \rdf{item dcterms:identifier}{\protect\thetopic}.~\rdf{item rdfs:label}{#2}}\par
   \let\oldtheenumi=\theenumi
   \RenewDocumentCommand{\theenumi}{}{\thetopic.\arabic{enumi}}
-  % \l__syllabus_new_topic{\luastring{\thetopic}}{#2}{#1}
-  \directlua{
-    topic = syll.Topic:new{index=\thetopic, title='#2', kw={#1}}
-    syll.Topics:addTopic(topic)
-  }
+  % \directlua{
+  %   topic = syll.Topic:new{index=\thetopic, title='#2', kw={#1}}
+  %
+  % }
+  \directlua{ syll.topic = syll.Topic:new{index=\thetopic, title='#2'}}
+  \keys_set:nn { syllabus/topic } { #1 }
+  \directlua{syll.Topics:addTopic(syll.topic)}
 }
 {
   \let\theenumi=\oldtheenumi
   \let\oldtheenumi=\relax
   % \luadirect{
-  %   topic = syll.Topics:getTopic(\thetopic)
-  %   syll.pt(topic, 'TOPIC:')
-  %   topic.sprintTitle('emph')}
+  %   syll.pt(syll.topic, 'TOPIC:')
+  %   syll.topic:sprintTitle('emph')
+  % }
   \end{rdfctx}
 }
 
+\keys_define:nn { syllabus/topic }
+{
+  lec .code:n = \luadirect{syll.topic.lec=#1},
+  lec .default:n = nil,
+  lab .code:n = \luadirect{syll.topic.lab=#1},
+  lab .default:n = nil,
+  sem .code:n = \luadirect{syll.topic.sem=#1},
+  sem .default:n = nil,
+  per .code:n = \luadirect{syll.topic.per=#1},
+  per .default:n = nil,
+  label .code:n = \luadirect{syll.topic.label=\luastring{#1}},
+  label .default:n = nil,
+  term .code:n = \luadirect{local term=#1; syll.topic.term=term or syll.Topics.term},
+  term .default:n = nil
+}
 
 \NewDocumentCommand\syllabuscontentbytopics{}{SYLLABUS HERE\par}
 
