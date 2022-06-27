@@ -1,3 +1,5 @@
+json = require("json")
+
 ALL = {}
 
 -- print("\n\n-------->", _VERSION, "\n\n")
@@ -23,7 +25,7 @@ Topics = {
 
 function pt(t, msg)
    if msg then
-      print(msg, ":")
+      print(string.format('%s:',msg))
    end
    for k,v in pairs(t) do
       print(string.format("%s = %s", k, v))
@@ -44,6 +46,40 @@ function update(t, t2)
       t[k] = v
    end
    return t
+end
+
+function encode(o)
+   print(o, type(o))
+   if type(o) == "number" then return tostring(o) end
+   if type(o) == "string" then
+      return string.format("[--[%s]--]", o)
+   end
+   return nil
+end
+
+function Topics:dump(tbl)
+   if tbl ==nil then
+      tbl = self
+   end
+   pt(self,"dump")
+   tbls = {}
+   d = {}
+   for k,v in pairs(self) do
+      if type(v) == "table" then
+         stbl = Topics:dump(v)
+         table.insert(tbls, string.format('"tbl_%s"=%s',k,stbl))
+         ev = stbl
+         tbls.__have=true
+      else
+         ev = encode(v)
+      end
+      if ev ~= nil then
+         table.insert(d, string.format('"%s"=%s',k,ev))
+      end
+      ::continue::
+   end
+   -- TODO:have
+   return string.format("{ %s }\n", table.concat(d,','))
 end
 
 function Topics:addTopic(topic)
@@ -309,12 +345,20 @@ function Work:setTopics(topics)
    self.topics = topics
 end
 
+function saveState(filename)
+   print("SAVE:", Topics:dump())
+end
 
+
+ALL.saveState = saveState
+ALL.restoreState = restoreState
 
 ALL.Topic = Topic
 ALL.Topics = Topics
 ALL.Works = Works
 ALL.Work = Work
 ALL.pt = pt
+
+
 
 return ALL

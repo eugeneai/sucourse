@@ -168,7 +168,7 @@
 }
 {
   \luadirect{syll.Topics:validation()}
-  % \luadirect{syll.Topics:print()}
+  \luadirect{syll.saveState('\jobname' .. '.json')}
 \end{rdfctx}
 }
 
