@@ -4,26 +4,6 @@ ALL = {}
 
 -- print("\n\n-------->", _VERSION, "\n\n")
 
-__hours = {
-      lec=0,
-      lab=0,
-      sem=0,
-      per=0
-   }
-
-Topics = {
-   topics = {},
-   topicList = {},
-   totals = __hours,
-   totalsControl = {
-      lec=0,
-      lab=0,
-      sem=0,
-      per=0
-   },
-   labels = {}
-}
-
 function soe(v) -- string or empty
    if v~=nil and v>0 then
       return tostring(v)
@@ -41,6 +21,7 @@ function pt(t, msg)
    end
 end
 
+
 function pl(t, msg)
    if msg then
       print(msg, ":")
@@ -50,6 +31,7 @@ function pl(t, msg)
    end
 end
 
+
 function update(t, t2)
    for k,v in pairs(t2) do
       t[k] = v
@@ -57,50 +39,27 @@ function update(t, t2)
    return t
 end
 
-function encode(o)
-   print(o, type(o))
-   if type(o) == "number" then return tostring(o) end
-   if type(o) == "string" then
-      return string.format("[--[%s]--]", o)
-   end
-   return nil
+
+Item = {
+   items = {}
+   labels = {}
+}
+
+
+function Item:print()
+   print("Item: ------------------")
+   pt(self, "self")
+   pt(self.items, "items")
+   pt(self.labels, "labels")
+   print("------------------------")
 end
 
-function Topics:dump(tbl, name, tbls)
-   if tbl == nil then
-      tbl = self
-   end
-   if name == nil then
-      name = "Topics"
-   end
-
-   if tbls == nil then
-      tbls = {}
-   end
-
-   pt(self,"dump")
-
-   d = {}
-   for k,v in pairs(self) do
-      if type(v) == "table" then
-         stbl = Topics:dump(v, k, tbls)
-         table.insert(tbls, string.format('"tbl_%s"=%s',k,stbl))
-         ev = stbl
-         tbls.__have=true
-      else
-         ev = encode(v)
-      end
-      if ev ~= nil then
-         table.insert(d, string.format('"%s"=%s',k,ev))
-      end
-      ::continue::
-   end
-   -- TODO:have
-   return string.format("{ %s }\n", table.concat(d,','))
+function Item:clear()
+   self.items = {}
+   self.labels = {}
 end
 
-
-function Topics:openFile(filename, ext)
+function Item:openFile(filename, ext)
    f=io.open(filename .. "." .. ext, "w")
    ALL[ext] = f
    f:write("\\relax\n")
@@ -109,11 +68,176 @@ function Topics:openFile(filename, ext)
 end
 
 
-function Topics:closeFile(ext)
+function Item:closeFile(ext)
    -- ALL.f:write("\MakeAtOther\n")
    f = ALL[ext]
    f:close()
    ALL[ext] = nil
+end
+
+
+function Item:setValue(name, val)
+   if val=="undefined" then
+      return val
+   end
+   self[val] = val
+end
+
+function Item:setTerm(term)
+   self:setValue("term", term)
+   if term ~= nil then
+      self.year = (term+1) // 2
+   end
+   return term
+end
+
+function Item:setType(t)
+   -- экзамен, зачет, зачет с оценкой, тест,
+   -- контрольная работа
+   return self:setValue("type", t)  -- TODO assign correct UUID
+end
+
+
+
+Items = {
+   __index = Item
+   totals = {}
+   accuns = {}
+   totalNames = {}
+}
+
+setmetatable(Items, Item)
+
+function Items:print()
+   print("Item: ------------------")
+   pt(self, "self")
+   pt(self.items, "items")
+   pt(self.labels, "labels")
+   pt(self.labels, "accums")
+   pt(self.labels, "totals")
+   print("------------------------")
+end
+
+function Items:addItem(item)
+   table.insert(self.items, item)
+   l = self.labels
+   if topic.label ~= nil then
+      l[topic.label] = item
+   end
+   l[topic.index] = item
+   t = self.accums
+   -- pt(topic, "TOPIC")
+   -- pt(t, "TOTALS")
+   tn = self:getTotalNames()
+   for i = 1, #tn do  -- accumulate
+      n = tn[i]
+      t[n] = (t[n] or 0) + (item[n] or 0)
+   end
+   -- pt(topic, "Added")
+   -- pt(t, "Accumulated")
+end
+
+
+function Items:getTotalNames()
+   return self.totalNames
+end
+
+function Items:getLabel(name) -- return labels for a total name
+   return {
+      "lec" : "Лекция",
+      "lab" : "Лабораторная работа",
+      "per" : "Самостоятельная работа",
+      "sem" : "Саминар",
+      "pra" : "Практическая работа"
+   } [name]
+end
+
+function Items:getRDFType(name)
+   pref = "wpdd:"
+   return "wpdd" .. {
+      "lec" : "Lection",
+      "lab" : "LaboratoryWork"
+      "per" : "IndependentWork"
+      "sem" : "Seminar"
+      "pra" : "PracticalWork"
+   }[name]
+end
+
+function Items:resetAccums()
+   self.accums = {}
+end
+
+function Items:setTotals(ctrl, val)
+   tc = self.totals
+   if val ~= nil then
+      self:setTotal(ctrl, val)
+   else
+      update(tc, ctrl)
+   end
+end
+
+function Items:setTotal(key, val)
+   tc = self.totals
+   tc[key] = val
+   return val
+end
+
+function Items:validate()
+   ts = self.accums
+   cs = self.totals
+   rc = {}
+   tn = self:getTotalNames()
+   for i = 1, #tn do
+      k = tn[i]
+      v = self:validateOne(k, ts[k], cs[k])
+      if v then
+         table.insert(rc, v)
+      end
+   end
+   return rc
+end
+
+function Items:validateOne(key, val, ctrl)
+   d = val-ctrl
+   if d==0 then return end
+   if val>ctrl then
+      return string.format("Суммарное значение %d атрибута '%s' БОЛЬШЕ чем нужно (%d) на %d", val, key, ctrl, d)
+   else
+      return string.format("Суммарное значение %d атрибута '%s' МЕНЬШЕ чем нужно (%d) на %d", val, key, ctrl, -d)
+   end
+end
+
+
+function Items:validation()
+   -- pt(Topics)
+   val = self:validate()
+   if #val > 0 then
+      pref = "\\item \\color{red} "
+      body = table.concat(val, "\n" .. pref)
+      con = table.concat(val, "\nERROR: ")
+      body = pref .. body
+      con = "ERROR: " .. con
+      prompt = "Итоговые значения не совпадают с плановыми"
+      tex.sprint(string.format("\\begin{SyllabusValidation}{%s}", prompt))
+      print(con)
+      tex.sprint(body)
+      tex.sprint("\\end{SyllabusValidation}")
+   end
+end
+
+
+
+
+
+Topics = {
+   __index = Topics
+   totalNames = {"lec", "lab", "sem", "per"}
+}
+
+setmetatable(Topics, Items)
+
+function Topics:getTotalNames()
+   return self.totalNames
 end
 
 function Topics:generate()
@@ -129,8 +253,8 @@ function Topics:generate()
   \SetCell[r=2]{c} Самост. работа & \\ \hline
   & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]])
    f:write("\n")
-   for i=1, #self.topicList do
-      t = self.topicList[i]
+   for i=1, #self.items do
+      t = self.items[i]
       f:write("\\topicname~")
       f:write(soe(t.index) .. ".~" .. t.title .. " & ")
       f:write(soe(t.term) .. " & ")
@@ -140,7 +264,7 @@ function Topics:generate()
       f:write(soe(t.per) .. " & ")
       f:write(Topics.control .. " \\\\\\hline\n")
    end
-   cc = self.totalsControl
+   cc = self.totals
    c = {}
    for k,v in pairs(cc) do
       c[k] = soe(v)
@@ -160,104 +284,12 @@ function Topics:generate()
    -- f:write("}\n")
 end
 
-function Topics:addTopic(topic)
-   table.insert(self.topics, topic)
-   l = self.labels
-   if topic.label ~= nil then
-      l[topic.label] = topic
-   end
-   l[topic.index] = topic
-   table.insert(self.topicList, topic)
-   t = self.totals
-   pt(topic, "TOPIC")
-   pt(t, "TOTALS")
-   t.lec = (t.lec or 0) + (topic.lec or 0)
-   t.lab = (t.lab or 0) + (topic.lab or 0)
-   t.sem = (t.sem or 0) + (topic.sem or 0)
-   t.per = (t.per or 0) + (topic.per or 0)
-   -- pt(topic, "Added")
-   -- pt(t, "Accumulated")
-end
 
-function Topics:setControl(ctrl, val)
-   tc = self.totalsControl or {}
-   if val ~= nil then
-      tc[ctrl] = val
-   else
-      update(tc, ctrl)
-   end
-   self.totalsControl = tc
-end
-
-
-function Topics:setTerm(term)
-   if term == "undefined" then
-      return
-   end
-   self.term = term
-   if term ~= nil then
-      self.year = (term+1) // 2
-   end
-end
-
-function Topics:setType(t)
-   -- экзамен, зачет, зачет с оценкой, тест,
-   -- контрольная работа
-   self.type = t  -- TODO assign correct UUID
-end
-
-
-function Topics:setControlKey(key, val)
-   tc = self.totalsControl or {}
-   tc[key] = val
-   self.totalsControl = tc
-end
-
-function Topics:validate()
-   ts = self.totals
-   cs = self.totalsControl
-   rc = {}
-   for k,_ in pairs(__hours) do
-      v = Topics:validateOne(k, ts[k], cs[k])
-      if v then
-         table.insert(rc, v)
-      end
-   end
-   return rc
-end
-
-function Topics:validateOne(key, val, ctrl)
-   d = val-ctrl
-   if d==0 then return end
-   if val>ctrl then
-      return string.format("Суммарное значение %d переменной '%s' БОЛЬШЕ чем нужно (%d) на %d", val, key, ctrl, d)
-   else
-      return string.format("Суммарное значение %d переменной '%s' МЕНЬШЕ чем нужно (%d) на %d", val, key, ctrl, -d)
-   end
-end
-
-function Topics:validation()
-   -- pt(Topics)
-   val = self:validate()
-   if #val > 0 then
-      pref = "\\item \\color{red} "
-      body = table.concat(val, "\n" .. pref)
-      con = table.concat(val, "\nERROR: ")
-      body = pref .. body
-      con = "ERROR: " .. con
-      prompt = "Итоговые значения не совпадают с плановыми"
-      tex.sprint(string.format("\\begin{SyllabusValidation}{%s}", prompt))
-      print(con)
-      tex.sprint(body)
-      tex.sprint("\\end{SyllabusValidation}")
-   end
-end
-
-function Topics:print()
-   pt(self, "TOPICS:")
-   pt(self.totals, "TOTALS:")
-   pt(self.totalsControl, "CONTROL:")
-   pt(self.labels, "LABELS:")
+function Totals:clear()
+   self.items = {}
+   self.labels = {}
+   self.accums = {}
+   self.totals = {}
 end
 
 Works = {
@@ -267,47 +299,10 @@ Works = {
 }
 
 Works.__index = Works
-setmetatable(Works, Topics)
-
-function Works:clear()
-   self.works={}
-   self.label={}
-   self.total=0
-   self.type = nil
-   self.name = nil
-   self.term = nil
-   self.comp = nil
-end
+setmetatable(Works, Items)
 
 
-function Works:getName(t)
-   if t=="lec" then
-      return "Лекция"
-   elseif t=="lab" then
-      return "Лабораторная работа"
-   elseif t=="per" then
-      return "Самостоятельная работа"
-   elseif t=="sem" then
-      return "Саминар"
-   elseif t=="pra" then
-      return "Практическая работа"
-   end
-end
-
-function Works:getRDFType(t)
-   pref = "wpdd:"
-   if t=="lec" then
-      return pref .. "Lection"
-   elseif t=="lab" then
-      return pref .. "LaboratoryWork"
-   elseif t=="per" or t=="ind" then
-      return pref .. "IndependentWork"
-   elseif t=="sem" then
-      return pref .. "Seminar"
-   elseif t=="pra" then
-      return pref .. "PracticalWork"
-   end
-end
+-- TODO: Continue refatoring
 
 function Works:setType(t, name)
    if t=='nil' then t=nil end
