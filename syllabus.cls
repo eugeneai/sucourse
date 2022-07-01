@@ -185,10 +185,10 @@
   per .default:n = nil,
   control .code:n = \luadirect{syll.Topics.control=\luastring{#1}},
   control .default:n = nil,
-  term .code:n = \luadirect{syll.Topics.term=#1},
-  term .default:n = nil,
   type .code:n = \luadirect{syll.Topics:setType(#1)},
-  type .default:n = nil
+  type .default:n = nil,
+  term .code:n = \luadirect{syll.Topics:setTerm(#1)},
+  term .default:n = nil
 }
 
 \def\topicname{Тема} % Раздел
@@ -229,10 +229,10 @@
   sem .default:n = nil,
   per .code:n = \luadirect{syll.topic.per=#1},
   per .default:n = nil,
-  label .code:n = \luadirect{syll.topic.label=\luastring{#1}},
-  label .default:n = nil,
-  term .code:n = \luadirect{local term=#1; syll.topic.term=term or syll.Topics.term},
-  term .default:n = nil
+  label .code:n = \luadirect{syll.topic:setLabel(#1)},
+  label .default:n = undefined,
+  term .code:n = \luadirect{syll.topic:setTerm(#1)},
+  term .default:n = default
 }
 
 % \def\workname{Лабораторная работа}

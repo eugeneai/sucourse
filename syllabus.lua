@@ -148,9 +148,9 @@ function Topics:generate()
 
    cc=nil
 
-   f:write(string.format([[\SetCell[c=2]{c}Итого ({%d} семестр) & & %s & %s & %s
+   f:write(string.format([[\SetCell[c=2]{c}Итого ({%s} семестр) & & %s & %s & %s
   & %s & %s \\\hline]],
-   self.term,
+   soe(self.term),
    c.lec,
    c.lab,
    c.sem,
@@ -169,10 +169,12 @@ function Topics:addTopic(topic)
    l[topic.index] = topic
    table.insert(self.topicList, topic)
    t = self.totals
-   t.lec = t.lec + topic.lec
-   t.lab = t.lab + topic.lab
-   t.sem = t.sem + topic.sem
-   t.per = t.per + topic.per
+   pt(topic, "TOPIC")
+   pt(t, "TOTALS")
+   t.lec = (t.lec or 0) + (topic.lec or 0)
+   t.lab = (t.lab or 0) + (topic.lab or 0)
+   t.sem = (t.sem or 0) + (topic.sem or 0)
+   t.per = (t.per or 0) + (topic.per or 0)
    -- pt(topic, "Added")
    -- pt(t, "Accumulated")
 end
@@ -187,6 +189,16 @@ function Topics:setControl(ctrl, val)
    self.totalsControl = tc
 end
 
+
+function Topics:setTerm(term)
+   if term == "undefined" then
+      return
+   end
+   self.term = term
+   if term ~= nil then
+      self.year = (term+1) // 2
+   end
+end
 
 function Topics:setType(t)
    -- экзамен, зачет, зачет с оценкой, тест,
@@ -374,12 +386,27 @@ function Topic:new(o)
    o.kw = nil
    self.__index = self
    setmetatable(o, self)
+   self:setTerm("default")
    return o
 end
 
 function Topic:setTerm(term)
+   if term == "default" then
+      term = Topics.term
+   end
    self.term = term
-   self.year = (term+1) // 2
+   if term ~= nil then
+      self.year = (term+1) // 2
+   else
+      self.year = nil
+   end
+end
+
+function Topic:setLabel(label)
+   if label == "undefined" then
+      return
+   end
+   self.label = label
 end
 
 function Topic:setHours(h)
