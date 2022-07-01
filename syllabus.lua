@@ -13,6 +13,7 @@ __hours = {
 
 Topics = {
    topics = {},
+   topicList = {},
    totals = __hours,
    totalsControl = {
       lec=0,
@@ -22,6 +23,14 @@ Topics = {
    },
    labels = {}
 }
+
+function soe(v) -- string or empty
+   if v~=nil and v>0 then
+      return tostring(v)
+   end
+   return ""
+end
+
 
 function pt(t, msg)
    if msg then
@@ -57,16 +66,24 @@ function encode(o)
    return nil
 end
 
-function Topics:dump(tbl)
-   if tbl ==nil then
+function Topics:dump(tbl, name, tbls)
+   if tbl == nil then
       tbl = self
    end
+   if name == nil then
+      name = "Topics"
+   end
+
+   if tbls == nil then
+      tbls = {}
+   end
+
    pt(self,"dump")
-   tbls = {}
+
    d = {}
    for k,v in pairs(self) do
       if type(v) == "table" then
-         stbl = Topics:dump(v)
+         stbl = Topics:dump(v, k, tbls)
          table.insert(tbls, string.format('"tbl_%s"=%s',k,stbl))
          ev = stbl
          tbls.__have=true
@@ -82,6 +99,67 @@ function Topics:dump(tbl)
    return string.format("{ %s }\n", table.concat(d,','))
 end
 
+
+function Topics:openFile(filename, ext)
+   f=io.open(filename .. "." .. ext, "w")
+   ALL[ext] = f
+   f:write("\\relax\n")
+   -- f:write("\\MakeAtLetter\n")
+   -- f:write([[\gdef\a@aa{HELLO!\par}]])
+end
+
+
+function Topics:closeFile(ext)
+   -- ALL.f:write("\MakeAtOther\n")
+   f = ALL[ext]
+   f:close()
+   ALL[ext] = nil
+end
+
+function Topics:generate()
+   f = ALL["cbt"] -- ContentByTopic
+   -- f:write([[\renewcommand{\syll@contentbytopic}[0]{]])
+   f:write([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
+  \hline
+  \SetCell[r=3]{c} Раздел дисциплины~/ тема &
+  \SetCell[r=3]{c} Семес. &
+  \SetCell[c=4]{c} Виды учебной работы & & & &
+  \SetCell[r=3]{l} Формы текущего контроля; Формы промежут. аттестации \\\hline
+  & &  \SetCell[c=3]{l,4cm} Контактная работа преподавателя с обучающимися & & &
+  \SetCell[r=2]{c} Самост. работа & \\ \hline
+  & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]])
+   f:write("\n")
+   for i=1, #self.topicList do
+      t = self.topicList[i]
+      f:write("\\topicname~")
+      f:write(soe(t.index) .. ".~" .. t.title .. " & ")
+      f:write(soe(t.term) .. " & ")
+      f:write(soe(t.lec) .. " & ")
+      f:write(soe(t.lab) .. " & ")
+      f:write(soe(t.sem) .. " & ")
+      f:write(soe(t.per) .. " & ")
+      f:write(Topics.control .. " \\\\\\hline\n")
+   end
+   cc = self.totalsControl
+   c = {}
+   for k,v in pairs(cc) do
+      c[k] = soe(v)
+   end
+
+   cc=nil
+
+   f:write(string.format([[\SetCell[c=2]{c}Итого ({%d} семестр) & & %s & %s & %s
+  & %s & %s \\\hline]],
+   self.term,
+   c.lec,
+   c.lab,
+   c.sem,
+   c.per,
+   soe(self.type)))
+   f:write("\n\\end{tblr}")
+   -- f:write("}\n")
+end
+
 function Topics:addTopic(topic)
    table.insert(self.topics, topic)
    l = self.labels
@@ -89,6 +167,7 @@ function Topics:addTopic(topic)
       l[topic.label] = topic
    end
    l[topic.index] = topic
+   table.insert(self.topicList, topic)
    t = self.totals
    t.lec = t.lec + topic.lec
    t.lab = t.lab + topic.lab
@@ -106,6 +185,13 @@ function Topics:setControl(ctrl, val)
       update(tc, ctrl)
    end
    self.totalsControl = tc
+end
+
+
+function Topics:setType(t)
+   -- экзамен, зачет, зачет с оценкой, тест,
+   -- контрольная работа
+   self.type = t  -- TODO assign correct UUID
 end
 
 

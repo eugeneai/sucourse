@@ -168,7 +168,8 @@
 }
 {
   \luadirect{syll.Topics:validation()}
-  \luadirect{syll.saveState('\jobname' .. '.json')}
+  % \luadirect{syll.saveState('\jobname' .. '.json')}
+  \luadirect{syll.Topics:generate()}
 \end{rdfctx}
 }
 
@@ -186,6 +187,8 @@
   control .default:n = nil,
   term .code:n = \luadirect{syll.Topics.term=#1},
   term .default:n = nil,
+  type .code:n = \luadirect{syll.Topics:setType(#1)},
+  type .default:n = nil
 }
 
 \def\topicname{Тема} % Раздел
@@ -310,12 +313,30 @@
   term .default:n = nil
 }
 
+
 \AtEndPreamble{
 %
 \rdf{%
   \rdfsetctx{syll}{wpdb:_}%
-%  \rdfsetctx{common}{wpdb:_}%
+  % \rdfsetctx{common}{wpdb:_}%
+  \gdef{\syll@contentbytopic}{\@rerun}
 }{}
 }
 
 \ExplSyntaxOff
+
+\AtBeginDocument{
+  %\@input{\jobname.syll}
+  %\luadirect{syll.Topics:openFile('\jobname' .. '.syll')}
+}
+
+\AtEndDocument{
+  \luadirect{syll.Topics:closeFile('cbt')}
+}
+
+\def\syll@rerun{\par{\color{red}Требуется повторный запуск luaLaTeX}}
+
+\NewDocumentCommand{\contentbytopic}{}{%
+  \noindent{\footnotesize{}\@input{\jobname.cbt}}
+  \luadirect{syll.Topics:openFile('\jobname','cbt')}
+}
