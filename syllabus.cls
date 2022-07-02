@@ -188,22 +188,24 @@
   per .default:n = nil,
   control .code:n = \luadirect{syll.item:setValue('control', \luastring{#1}, syll.items)},
   control .default:n = nil,
-  type .code:n = \luadirect{syll.item:setType(\luastring{#1}, syll.items)},
+  type .code:n = \luadirect{syll.item:setType(\luastring{#1}, nil, syll.items)},
   type .default:n = nil,
   term .code:n = \luadirect{syll.item:setTerm(\luastring{#1}, syll.items)},
   term .default:n = nil,
-  itemname .code:n = \def\itemname{\luastring{#1}},
+  itemname .code:n = \def\itemname{#1} \luadirect{syll.item:setItemName(\luastring{\itemname}, syll.items)},
   itemname .default:n = {Тема},
   label .code:n = \luadirect{syll.item:setValue('label', \luastring{#1})},
   label .default:n = undefined,
   comp .code:n = \luadirect{syll.item:setValue('comp', \luastring{#1})},
   comp .default:n = nil,
-  name .code:n = \luadirect{syll.item:setName(\luastring{#1}, syll.items) },
+  name .code:n = \luadirect{syll.item:setValue('name', \luastring{#1}, syll.items)},
   name .default:n = nil,
   hours .code:n = \luadirect{syll.item:setValue('hours', \luastring{#1})},
   hours .default:n = nil,
   topics .code:n = \luadirect{syll.item:setValue('topics', \luastring{#1})},
-  topics .default:n = {}
+  topics .default:n = {},
+  testing .code:n = \luadirect{syll.item:setValue('testing', \luastring{#1})},
+  testing .default:n = {}
 }
 
 \NewDocumentEnvironment{syll@items}{O{}}
@@ -223,8 +225,8 @@
 
 \NewDocumentEnvironment{topics}{O{}}
 {
-  \def\itemname{Тема}
-  \begin{syll@items}[#1]
+   % \begin{syll@items}[#1,type=topic,itemname=\itemname]
+  \begin{syll@items}[type=topic,itemname={Тема},#1]
     \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:TopicList !wpdd:ItemList \luadirect{syll.Item:sprintRDFType()}}}
 }
 {
@@ -237,14 +239,14 @@
 
 \NewDocumentEnvironment{topic}{O{}mb}
 {
-  {\bfseries \itemname\ \rdf{item dcterms:identifier}{\protect\theitem}.~\rdf{item rdfs:label}{#2}}\par
-  \begin{rdfctx}{\rdfsetctx{item}{list ^schema:member !wpdd:ListItem !wpdd:Topic}}
   \begin{syll@item}[#1]{#2}
+  \paragraph{\itemname\ \rdf{item dcterms:identifier}{\protect\theitem}.~\rdf{item rdfs:label}{#2}}\par
+  \begin{rdfctx}{\rdfsetctx{item}{list ^schema:member !wpdd:ListItem !wpdd:Topic}}
   #3
 }
 {
-  \end{syll@item}
   \end{rdfctx}
+  \end{syll@item}
 }
 
 

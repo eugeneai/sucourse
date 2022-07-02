@@ -5,7 +5,7 @@ ALL = {}
 -- print("\n\n-------->", _VERSION, "\n\n")
 
 function soe(v) -- string or empty
-   if v~=nil and v>0 then
+   if v~=nil and (type(v) == "string" or v>0) then
       return tostring(v)
    end
    return ""
@@ -70,6 +70,9 @@ function Item:clear()
 end
 
 function Item:setValue(name, val, parent)
+   -- if name == "itemname" then
+   --    print ("SetItemName '" .. name .. "'=" .. tostring(val))
+   -- end
    if val=="ignored" then
       return val
    end
@@ -102,11 +105,11 @@ end
 
 function Item:sprintItemName()
    if self.name then
-      name = self.name
+      name = self.itemname
    else
       name = self:getName(self.type)  -- default if any
    end
-   tex.sprint(string.format('\\def\\itemname{%s}', name))
+   tex.sprint('\\def\\itemname{' .. name .. '}%\n')
 end
 
 function Item:sprintRDFType()
@@ -127,15 +130,27 @@ function Item:sprintTitle(emph, titlename)
 end
 
 function Item:setType(t, name, parent)
-   self:setValue(name, t, parent)
-   self:setName(name, parent)
+   self:setValue("type", t, parent)
+   self:setItemName(name, parent)
 end
 
-function Item:setName(name, parent)
+function Item:setItemName(name, parent)
    if name == nil then
-      name = self:getName(self.type)
+      name = self:getItemName(self.type)
    end
-   return self:setValue("name", name, parent)
+   return self:setValue("itemname", name, parent)
+end
+
+
+function Item:getItemName(t)
+   d = {
+      topic = "Тема"
+   }
+   n = d[t]
+   if n==nil then
+      n = t
+   end
+   return n
 end
 
 function Item:print()
@@ -275,11 +290,11 @@ end
 
 
 function Item:workValidation(total)
-   total = total or parent.totals[self.type]
+   total = total or self.totals[self.type]
    -- pt(Topics.totalsControl, "TOP")
    -- print(self.type)
    if total == nil then
-      return error("Type is unknown and total is empty too")
+      return print("ERROR: Тип студенческих работ не известен или не определен")
    end
    if self.total ~= total then
       tex.sprint(
@@ -303,6 +318,7 @@ end
 function Item:generateContentByTopic()
    f = ALL.files["cbt"] -- ContentByTopic
    -- f:write([[\renewcommand{\syll@contentbytopic}[0]{]])
+   f:write("\\def\\itemname{" .. self.itemname .. "}%\n")
    f:write([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
   \hline
   \SetCell[r=3]{c} Раздел дисциплины~/ тема &
