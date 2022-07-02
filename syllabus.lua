@@ -118,7 +118,10 @@ function Item:sprintRDFTypes()
       return
    else
       for i = 1, #t do
-         tex.sprint(" !wpdd:" .. t[i] .. " ")
+         ty = " !wpdd:" .. t[i] .. " "
+         tex.sprint(ty)
+         -- error(ty)
+         print(ty)
       end
    end
 end
