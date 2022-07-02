@@ -24,7 +24,7 @@ end
 
 function pl(t, msg)
    if msg then
-      print(msg, ":")
+      print(msg .. ":")
    end
    for i = 1, #t do
       print(t[i])
@@ -32,31 +32,41 @@ function pl(t, msg)
 end
 
 
-function update(t, t2)
+function update(t, t2, parent)
    for k,v in pairs(t2) do
-      t[k] = v
+      if v == "default" then
+         if parent ~= nil then
+            v = parent[k]
+         else
+            goto continue
+         end
+      elseif v == "ignored" then
+         goto continue
+      else
+         t[k] = v
+      end
+      ::continue::
    end
    return t
 end
 
 
-Item = {
-   items = {}
-   labels = {}
-}
+Item = {}
 
-
-function Item:print()
-   print("Item: ------------------")
-   pt(self, "self")
-   pt(self.items, "items")
-   pt(self.labels, "labels")
-   print("------------------------")
+function Item:new(o)
+   o = o or error("need a filled in object")
+   self.__index = self
+   setmetatable(o, self)
+   return o
 end
 
 function Item:clear()
-   self.items = {}
-   self.labels = {}
+   if self.items then
+      self.items = {}
+      self.labels = {}
+      self.accums = {}
+      self.totals = {}
+   end
 end
 
 function Item:openFile(filename, ext)
@@ -67,7 +77,6 @@ function Item:openFile(filename, ext)
    -- f:write([[\gdef\a@aa{HELLO!\par}]])
 end
 
-
 function Item:closeFile(ext)
    -- ALL.f:write("\MakeAtOther\n")
    f = ALL[ext]
@@ -76,17 +85,23 @@ function Item:closeFile(ext)
 end
 
 
-function Item:setValue(name, val)
-   if val=="undefined" then
+function Item:setValue(name, val, parent)
+   if val=="ignored" then
       return val
    end
-   self[val] = val
+   if val=="default" and parent ~= nil then
+      self:setValue(name, parent[name])
+   else
+      self[val] = val
+   end
 end
 
 function Item:setTerm(term)
-   self:setValue("term", term)
+   self:setValue("term", term, self.parent)
    if term ~= nil then
       self.year = (term+1) // 2
+   else
+      self.year = nil
    end
    return term
 end
@@ -94,41 +109,92 @@ end
 function Item:setType(t)
    -- экзамен, зачет, зачет с оценкой, тест,
    -- контрольная работа
-   return self:setValue("type", t)  -- TODO assign correct UUID
+   return self:setValue("type", t, self.parent)  -- TODO assign correct UUID
 end
 
+function Item:setVals(h, parent)
+   update(self, h, parent)
+end
 
+function Item:sprintItemName()
+   if self.name then
+      name = self.name
+   else
+      name = self:getName(self.type)  -- default if any
+   end
+   tex.sprint(string.format('\\def\\itemname{%s}', name))
+end
 
-Items = {
-   __index = Item
-   totals = {}
-   accuns = {}
-   totalNames = {}
-}
+function Item:sprintRDFType()
+   tex.sprintRDFType("!" .. self:getRDFType(self.type))
+end
 
-setmetatable(Items, Item)
+function Item:sprintTitle(emph, titlename)
+   -- pt(self, "SELF:")
+   tex.sprint("\\" .. titlename .. "name~\\the" .. titlename .. ".~")
+   if emph then
+      tex.sprint("\\" .. emph .. "{")
+   end
+   tex.sprint(self.title)
+   if emph then
+      tex.sprint("}")
+   end
+   tex.sprint("\\par")
+end
 
-function Items:print()
+function Item:setType(t, name, parent)
+   self:setValue(name, t, parent)
+   self:setName(name, parent)
+end
+
+function Item:setName(name, parent)
+   if name = nil then
+      name = self:getName(self.type)
+   end
+   return self:setValue("name", name, parent)
+end
+
+function Item:print()
    print("Item: ------------------")
    pt(self, "self")
-   pt(self.items, "items")
-   pt(self.labels, "labels")
-   pt(self.labels, "accums")
-   pt(self.labels, "totals")
+   if self.items then
+      pt(self.items, "items")
+   end
+   if self.labels then
+      pt(self.labels, "labels")
+   end
+   if self.accums then
+      pt(self.accums, "accums")
+   end
+   if self.totals then
+      pt(self.labels, "totals")
+   end
    print("------------------------")
 end
 
-function Items:addItem(item)
+function Item:asItems(totalNames)
+   self.items = {}
+   self.labels = {}
+   self.accums = {}
+   self.totals = {}
+   self.totalNames = totalNames
+   return self
+end
+
+function Item:addItem(item, totalNames)
+   if self.items == nil then  -- initialize as Items
+      self:asItems(totalNames)
+   end
+
    table.insert(self.items, item)
+   item.parent = self
    l = self.labels
    if topic.label ~= nil then
       l[topic.label] = item
    end
-   l[topic.index] = item
+   -- l[topic.index] = item
    t = self.accums
-   -- pt(topic, "TOPIC")
-   -- pt(t, "TOTALS")
-   tn = self:getTotalNames()
+   tn = self.totalNames
    for i = 1, #tn do  -- accumulate
       n = tn[i]
       t[n] = (t[n] or 0) + (item[n] or 0)
@@ -137,12 +203,7 @@ function Items:addItem(item)
    -- pt(t, "Accumulated")
 end
 
-
-function Items:getTotalNames()
-   return self.totalNames
-end
-
-function Items:getLabel(name) -- return labels for a total name
+function Item:getLabel(name) -- return labels for a total name
    return {
       "lec" : "Лекция",
       "lab" : "Лабораторная работа",
@@ -152,7 +213,7 @@ function Items:getLabel(name) -- return labels for a total name
    } [name]
 end
 
-function Items:getRDFType(name)
+function Item:getRDFType(name)
    pref = "wpdd:"
    return "wpdd" .. {
       "lec" : "Lection",
@@ -163,11 +224,13 @@ function Items:getRDFType(name)
    }[name]
 end
 
-function Items:resetAccums()
-   self.accums = {}
+function Item:resetAccums()
+   if self.accums then
+      self.accums = {}
+   end
 end
 
-function Items:setTotals(ctrl, val)
+function Item:setTotals(ctrl, val)
    tc = self.totals
    if val ~= nil then
       self:setTotal(ctrl, val)
@@ -176,17 +239,17 @@ function Items:setTotals(ctrl, val)
    end
 end
 
-function Items:setTotal(key, val)
+function Item:setTotal(key, val)
    tc = self.totals
    tc[key] = val
    return val
 end
 
-function Items:validate()
+function Item:validate()
    ts = self.accums
    cs = self.totals
    rc = {}
-   tn = self:getTotalNames()
+   tn = self.totalNames
    for i = 1, #tn do
       k = tn[i]
       v = self:validateOne(k, ts[k], cs[k])
@@ -197,7 +260,7 @@ function Items:validate()
    return rc
 end
 
-function Items:validateOne(key, val, ctrl)
+function Item:validateOne(key, val, ctrl)
    d = val-ctrl
    if d==0 then return end
    if val>ctrl then
@@ -207,8 +270,7 @@ function Items:validateOne(key, val, ctrl)
    end
 end
 
-
-function Items:validation()
+function Item:topicValidation()
    -- pt(Topics)
    val = self:validate()
    if #val > 0 then
@@ -226,21 +288,33 @@ function Items:validation()
 end
 
 
-
-
-
-Topics = {
-   __index = Topics
-   totalNames = {"lec", "lab", "sem", "per"}
-}
-
-setmetatable(Topics, Items)
-
-function Topics:getTotalNames()
-   return self.totalNames
+function Item:workValidation(total)
+   total = total or parent.totals[self.type]
+   -- pt(Topics.totalsControl, "TOP")
+   -- print(self.type)
+   if total == nil then
+      return error("Type is unknown and total is empty too")
+   end
+   if self.total ~= total then
+      tex.sprint(
+         string.format(
+            "\\paragraph{\\color{red} Количество часов не совпадает (%s) }", self.type))
+      d = self.total - total
+      if d>0 then
+         tex.sprint(
+            string.format(
+               "{\\bfseries \\color{red} суммарное количество (%u) БОЛЬШЕ целевого (%u) на %d}\\par",
+               self.total, total, d))
+      else
+         tex.sprint(
+            string.format(
+               "{\\bfseries \\color{red} суммарное количество (%u) МЕНЬШЕ целевого (%u) на %d}\\par",
+               self.total, total, -d))
+      end
+   end
 end
 
-function Topics:generate()
+function Item:generateContentByTopic()
    f = ALL["cbt"] -- ContentByTopic
    -- f:write([[\renewcommand{\syll@contentbytopic}[0]{]])
    f:write([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
@@ -285,188 +359,14 @@ function Topics:generate()
 end
 
 
-function Totals:clear()
-   self.items = {}
-   self.labels = {}
-   self.accums = {}
-   self.totals = {}
-end
-
-Works = {
-   works = {},
-   labels = {},
-   total = 0
-}
-
-Works.__index = Works
-setmetatable(Works, Items)
+--   totalNames = {"lec", "lab", "sem", "per"}
 
 
--- TODO: Continue refatoring
+-- ALL.saveState = saveState
+-- ALL.restoreState = restoreState
 
-function Works:setType(t, name)
-   if t=='nil' then t=nil end
-   self.type = t
-   self:setName(name)
-end
-
-function Works:setName(name)
-   print(self)
-   if name then
-      self.name = name
-   else
-      self.name = self:getName(self.type)
-   end
-end
-
-function Works:sprintWorkName()
-   if self.name then
-      name = self.name
-   else
-      name = self:getName(self.type)  -- default if any
-   end
-   tex.sprint(string.format('\\def\\workname{%s}', name))
-end
-
-function Works:sprintRDFType()
-   tex.sprintRDFType("!" .. self:getRDFType(self.type))
-end
-
-function Works:addWork(w)
-   table.insert(self.works, w)
-   -- pt(w, "WORK")
-   self.total = self.total + w.hours
-   if w.label then
-      self.labels[w.label] = w
-   end
-   self.labels[w.index] = w
-end
-
-
-function Works:validation(total)
-   total = total or Topics.totalsControl[self.type]
-   -- pt(Topics.totalsControl, "TOP")
-   -- print(self.type)
-   if total == nil then
-      return error("Type is unknown and total is empty too")
-   end
-   if self.total ~= total then
-      tex.sprint(
-         string.format(
-            "\\paragraph{\\color{red} Количество часов не совпадает (%s) }", self.type))
-      d = self.total - total
-      if d>0 then
-         tex.sprint(
-            string.format(
-               "{\\bfseries \\color{red} суммарное количество (%u) БОЛЬШЕ целевого (%u) на %d}\\par",
-               self.total, total, d))
-      else
-         tex.sprint(
-            string.format(
-               "{\\bfseries \\color{red} суммарное количество (%u) МЕНЬШЕ целевого (%u) на %d}\\par",
-               self.total, total, -d))
-      end
-   end
-end
-
-Topic = {}
-
-function Topic:new(o)
-   o = o or error("need a filled in object")
-   o.topicName = o.topicName or "Тема"
-   update(o, __hours)
-   if o.kw then
-      update(o, o.kw)
-   end
-   o.kw = nil
-   self.__index = self
-   setmetatable(o, self)
-   self:setTerm("default")
-   return o
-end
-
-function Topic:setTerm(term)
-   if term == "default" then
-      term = Topics.term
-   end
-   self.term = term
-   if term ~= nil then
-      self.year = (term+1) // 2
-   else
-      self.year = nil
-   end
-end
-
-function Topic:setLabel(label)
-   if label == "undefined" then
-      return
-   end
-   self.label = label
-end
-
-function Topic:setHours(h)
-   update(self, h)
-end
-
-function Topic:print()
-   pt(self)
-end
-
-function Topic:sprintTitle(emph)
-   -- pt(self, "SELF:")
-   tex.sprint("\\topicname~\\thetopic.~")
-   if emph then
-      tex.sprint("\\" .. emph .. "{")
-   end
-   tex.sprint(self.title)
-   if emph then
-      tex.sprint("}")
-   end
-   tex.sprint("\\par")
-end
-
-Work = {}
-
-function Work:new(o)
-   o = o or error("need a filled in object")
-   if o.kw then
-      update(o, o.kw)
-   end
-   o.kw = nil
-   self.__index = self
-   setmetatable(o, self)
-   setmetatable(self, Topic)
-   return o
-end
-
-
-
-function Work:setComp(comp)
-   if comp then
-      self.comp = comp
-   else
-      self.comp = Works.comp
-   end
-end
-
-function Work:setTopics(topics)
-   self.topics = topics
-end
-
-function saveState(filename)
-   print("SAVE:", Topics:dump())
-end
-
-
-ALL.saveState = saveState
-ALL.restoreState = restoreState
-
-ALL.Topic = Topic
-ALL.Topics = Topics
-ALL.Works = Works
-ALL.Work = Work
+ALL.Item = Item
 ALL.pt = pt
-
-
+ALL.pl = pl
 
 return ALL
