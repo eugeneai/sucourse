@@ -69,22 +69,6 @@ function Item:clear()
    end
 end
 
-function Item:openFile(filename, ext)
-   f=io.open(filename .. "." .. ext, "w")
-   ALL[ext] = f
-   f:write("\\relax\n")
-   -- f:write("\\MakeAtLetter\n")
-   -- f:write([[\gdef\a@aa{HELLO!\par}]])
-end
-
-function Item:closeFile(ext)
-   -- ALL.f:write("\MakeAtOther\n")
-   f = ALL[ext]
-   f:close()
-   ALL[ext] = nil
-end
-
-
 function Item:setValue(name, val, parent)
    if val=="ignored" then
       return val
@@ -92,7 +76,7 @@ function Item:setValue(name, val, parent)
    if val=="default" and parent ~= nil then
       self:setValue(name, parent[name])
    else
-      self[val] = val
+      self[name] = val
    end
 end
 
@@ -189,12 +173,12 @@ function Item:addItem(item, totalNames)
    table.insert(self.items, item)
    item.parent = self
    l = self.labels
-   if topic.label ~= nil then
-      l[topic.label] = item
+   if item.label ~= nil then
+      l[item.label] = item
    end
    -- l[topic.index] = item
    t = self.accums
-   tn = self.totalNames
+   tn = self.totalNames or {} -- TODO: hack
    for i = 1, #tn do  -- accumulate
       n = tn[i]
       t[n] = (t[n] or 0) + (item[n] or 0)
@@ -251,7 +235,7 @@ function Item:validate()
    ts = self.accums
    cs = self.totals
    rc = {}
-   tn = self.totalNames
+   tn = self.totalNames or {} -- TODO: hack
    for i = 1, #tn do
       k = tn[i]
       v = self:validateOne(k, ts[k], cs[k])
@@ -317,7 +301,7 @@ function Item:workValidation(total)
 end
 
 function Item:generateContentByTopic()
-   f = ALL["cbt"] -- ContentByTopic
+   f = ALL.files["cbt"] -- ContentByTopic
    -- f:write([[\renewcommand{\syll@contentbytopic}[0]{]])
    f:write([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
   \hline
@@ -331,14 +315,14 @@ function Item:generateContentByTopic()
    f:write("\n")
    for i=1, #self.items do
       t = self.items[i]
-      f:write("\\topicname~")
+      f:write("\\itemname~")
       f:write(soe(t.index) .. ".~" .. t.title .. " & ")
       f:write(soe(t.term) .. " & ")
       f:write(soe(t.lec) .. " & ")
       f:write(soe(t.lab) .. " & ")
       f:write(soe(t.sem) .. " & ")
       f:write(soe(t.per) .. " & ")
-      f:write(Topics.control .. " \\\\\\hline\n")
+      f:write(self.control .. " \\\\\\hline\n")
    end
    cc = self.totals
    c = {}
@@ -367,8 +351,31 @@ end
 -- ALL.saveState = saveState
 -- ALL.restoreState = restoreState
 
+function openFile(filename, ext)
+   f=io.open(filename .. "." .. ext, "w")
+   ALL[ext] = f
+   f:write("\\relax\n")
+   -- f:write("\\MakeAtLetter\n")
+   -- f:write([[\gdef\a@aa{HELLO!\par}]])
+   ALL.files[ext] = f
+   return f
+end
+
+function closeFile(ext)
+   -- ALL.f:write("\MakeAtOther\n")
+   f = ALL.files[ext]
+   f:close()
+   ALL.files[ext] = nil
+end
+
+
+
+
 ALL.Item = Item
 ALL.pt = pt
 ALL.pl = pl
+ALL.openFile = openFile
+ALL.closeFile = closeFile
+ALL.files={}
 
 return ALL

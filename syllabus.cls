@@ -164,7 +164,7 @@
   \let\oldtheenumi=\theenumi
   \RenewDocumentCommand{\theenumi}{}{\theitem.\arabic{enumi}}
   \directlua{
-    syll.item = syll.Item:new{index=\theitem, title='#2'}
+    syll.item = syll.Item:new{index=\theitem, title=\luastring{#2}}
   }
   \keys_set:nn { syllabus/item } { #1 }
   \directlua{
@@ -178,31 +178,31 @@
 
 \keys_define:nn { syllabus/item }
 {
-  lec .code:n = \luadirect{syll.Topics:setControl({lec=#1})},
+  lec .code:n = \luadirect{syll.item:setValue('lec', \luastring{#1})},
   lec .default:n = nil,
-  lab .code:n = \luadirect{syll.Topics:setControl({lab=#1})},
+  lab .code:n = \luadirect{syll.item:setValue('lab', \luastring{#1})},
   lab .default:n = nil,
-  sem .code:n = \luadirect{syll.Topics:setControl({sem=#1})},
+  sem .code:n = \luadirect{syll.item:setValue('sem', \luastring{#1})},
   sem .default:n = nil,
-  per .code:n = \luadirect{syll.Topics:setControl({per=#1})},
+  per .code:n = \luadirect{syll.item:setValue('per', \luastring{#1})},
   per .default:n = nil,
-  control .code:n = \luadirect{syll.Topics.control=\luastring{#1}},
+  control .code:n = \luadirect{syll.item:setValue('control', \luastring{#1}, syll.items)},
   control .default:n = nil,
-  type .code:n = \luadirect{syll.Topics:setType(#1)},
+  type .code:n = \luadirect{syll.item:setType(\luastring{#1}, syll.items)},
   type .default:n = nil,
-  term .code:n = \luadirect{syll.Topics:setTerm(#1)},
+  term .code:n = \luadirect{syll.item:setTerm(\luastring{#1}, syll.items)},
   term .default:n = nil,
-  itemname .code:n = \def\itemname{#1},
+  itemname .code:n = \def\itemname{\luastring{#1}},
   itemname .default:n = {Тема},
-  label .code:n = \luadirect{syll.topic:setLabel(#1)},
+  label .code:n = \luadirect{syll.item:setValue('label', \luastring{#1})},
   label .default:n = undefined,
-  comp .code:n = \luadirect{syll.Works.comp=\luastring{#1}},
+  comp .code:n = \luadirect{syll.item:setValue('comp', \luastring{#1})},
   comp .default:n = nil,
-  name .code:n = \luadirect{local name='#1'; syll.Works:setName(name) },
+  name .code:n = \luadirect{syll.item:setName(\luastring{#1}, syll.items) },
   name .default:n = nil,
-  hours .code:n = \luadirect{syll.work.hours=#1},
+  hours .code:n = \luadirect{syll.item:setValue('hours', \luastring{#1})},
   hours .default:n = nil,
-  topics .code:n = \luadirect{local topics=[[1]]; syll.work:setTopics(topics)},
+  topics .code:n = \luadirect{syll.item:setValue('topics', \luastring{#1})},
   topics .default:n = {}
 }
 
@@ -211,12 +211,13 @@
   \setcounter{syll@item}{0}
   \directlua{
     syll.items = syll.Item:new{}
-    syll.items.asItems()
+    syll.items:asItems()
+    syll.item = syll.items
   }
   \keys_set:nn { syllabus/item } { #1 }
 }
 {
-  \directlua{syll.items = nil}
+  \directlua{syll.items = nil; syll.item = nil}
   % TODO: DUMP?
 }
 
@@ -258,7 +259,7 @@
   \def\itemname{Работа студента}
   \begin{syll@items}[#1]
   \luadirect{
-    syll.items:sprintWorkName()
+    syll.items:sprintItemName()
   }
   \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:ExampleList !wpdd:CurrentAttestation !wpdd:ItemList}}
   \def\syllabus@worktype{wpdd:LaboratoryWork}
@@ -273,7 +274,6 @@
 
 \NewDocumentEnvironment{work}{O{}m}
 {
-  \refstepcounter{syllabus@work}
   \def\itemname{Работа}
   \begin{syll@item}[#1]{#2}
   \begin{rdfenv}{list ^schema:member !wpdd:ListItem !wpdd:Example }
@@ -302,12 +302,12 @@
 }
 
 \AtEndDocument{
-  \luadirect{syll.Topics:closeFile('cbt')}
+  \luadirect{syll.closeFile('cbt')}
 }
 
 \def\syll@rerun{\par{\color{red}Требуется повторный запуск \LuaLaTeX}}
 
 \NewDocumentCommand{\contentbytopic}{}{%
   \noindent{\footnotesize{}\@input{\jobname.cbt}}
-  \luadirect{syll.Topics:openFile('\jobname','cbt')}
+  \luadirect{syll.openFile('\jobname','cbt')}
 }
