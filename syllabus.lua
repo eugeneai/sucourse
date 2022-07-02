@@ -148,7 +148,7 @@ function Item:setType(t, name, parent)
 end
 
 function Item:setName(name, parent)
-   if name = nil then
+   if name == nil then
       name = self:getName(self.type)
    end
    return self:setValue("name", name, parent)
@@ -204,24 +204,26 @@ function Item:addItem(item, totalNames)
 end
 
 function Item:getLabel(name) -- return labels for a total name
-   return {
-      "lec" : "Лекция",
-      "lab" : "Лабораторная работа",
-      "per" : "Самостоятельная работа",
-      "sem" : "Саминар",
-      "pra" : "Практическая работа"
-   } [name]
+   d = {
+      lec = "Лекция",
+      lab = "Лабораторная работа",
+      per = "Самостоятельная работа",
+      sem = "Саминар",
+      pra = "Практическая работа"
+   }
+   return d[name]
 end
 
 function Item:getRDFType(name)
    pref = "wpdd:"
-   return "wpdd" .. {
-      "lec" : "Lection",
-      "lab" : "LaboratoryWork"
-      "per" : "IndependentWork"
-      "sem" : "Seminar"
-      "pra" : "PracticalWork"
-   }[name]
+   d = {
+      lec = "Lection",
+      lab = "LaboratoryWork",
+      per = "IndependentWork",
+      sem = "Seminar",
+      pra = "PracticalWork"
+   }
+   return pref .. d[name]
 end
 
 function Item:resetAccums()
