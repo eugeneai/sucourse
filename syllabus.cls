@@ -190,6 +190,8 @@
   control .default:n = nil,
   type .code:n = \luadirect{syll.item:setType(\luastring{#1}, nil, syll.items)},
   type .default:n = nil,
+  rdftype .code:n = \luadirect{syll.item:setValue('rdftype', {#1})},
+  rdftype .default:n = nil,
   term .code:n = \luadirect{syll.item:setTerm(\luastring{#1}, syll.items)},
   term .default:n = nil,
   itemname .code:n = \def\itemname{#1} \luadirect{syll.item:setItemName(\luastring{\itemname}, syll.items)},
@@ -260,9 +262,9 @@
 {
   \def\itemname{Работа студента}
   \begin{syll@items}[#1]
-  \luadirect{
-    syll.items:sprintItemName()
-  }
+  % \luadirect{
+  %   syll.items:sprintItemName()
+  % }
   \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:ExampleList !wpdd:CurrentAttestation !wpdd:ItemList}}
   \def\syllabus@worktype{wpdd:LaboratoryWork}
 }
@@ -276,9 +278,8 @@
 
 \NewDocumentEnvironment{work}{O{}m}
 {
-  \def\itemname{Работа}
   \begin{syll@item}[#1]{#2}
-  \begin{rdfenv}{list ^schema:member !wpdd:ListItem !wpdd:Example }
+  \begin{rdfenv}{list ^schema:member !wpdd:ListItem !wpdd:Example \luadirect{self.item:sprintRDFTypes()} }
   \paragraph{{\workheaderstyle \itemname\ \theitem.}~{\worktitlestyle #2}}
 }
 {
@@ -313,3 +314,20 @@
   \noindent{\footnotesize{}\@input{\jobname.cbt}}
   \luadirect{syll.openFile('\jobname','cbt')}
 }
+
+
+\NewDocumentEnvironment{labworks}{O{}}
+{\begin{works}[type=labwork,itemname={Лабораторная работа},rdftype={LaboratoryWork},#1]}
+{\end{works}}
+
+\NewDocumentEnvironment{personalworks}{O{}}
+{\begin{works}[type=personalwork,itemname={Самостоятельная работа},rdftype={PersonalWork},#1]}
+{\end{works}}
+
+\NewDocumentEnvironment{seminars}{O{}}
+{\begin{works}[type=seminar,itemname={Семинар},rdftype={Seminar},#1]}
+{\end{works}}
+
+\NewDocumentEnvironment{practicalworks}{O{}}
+{\begin{works}[type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
+{\end{works}}

@@ -112,8 +112,15 @@ function Item:sprintItemName()
    tex.sprint('\\def\\itemname{' .. name .. '}%\n')
 end
 
-function Item:sprintRDFType()
-   tex.sprintRDFType("!" .. self:getRDFType(self.type))
+function Item:sprintRDFTypes()
+   t = self.rdftype
+   if t == nil then
+      return
+   else
+      for i = 1, #t do
+         tex.sprint(" !wpdd:" .. t[i] .. " ")
+      end
+   end
 end
 
 function Item:sprintTitle(emph, titlename)
