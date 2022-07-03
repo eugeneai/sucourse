@@ -221,7 +221,9 @@
   \keys_set:nn { syllabus/item } { #1 }
 }
 {
-  \directlua{syll.items = nil; syll.item = nil}
+  \directlua{
+    syll.content[syll.items.type]=syll.items; syll.items=nil; syll.item=nil}
+
   % TODO: DUMP?
 }
 
@@ -305,7 +307,7 @@
 }
 
 \AtEndDocument{
-  \luadirect{syll.closeFile('cbt')}
+  \luadirect{syll.closeFile('cbt');syll.tbl.save(syll.content, '\jobname-content.lua')}
 }
 
 \def\syll@rerun{\par{\color{red}Требуется повторный запуск \LuaLaTeX}}
@@ -331,3 +333,6 @@
 \NewDocumentEnvironment{practicalworks}{O{}}
 {\begin{works}[type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
 {\end{works}}
+
+
+\NewDocumentEnvironment{syll@tile}{}{}{}

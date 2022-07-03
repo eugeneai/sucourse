@@ -1,4 +1,6 @@
-json = require("json")
+-- json = require("json")
+
+tbl = require("table.save-0.94.lua")
 
 ALL = {}
 
@@ -394,14 +396,13 @@ function closeFile(ext)
    ALL.files[ext] = nil
 end
 
-
-
-
 ALL.Item = Item
 ALL.pt = pt
 ALL.pl = pl
 ALL.openFile = openFile
 ALL.closeFile = closeFile
 ALL.files={}
+ALL.content={}
+ALL.tbl=tbl
 
 return ALL
