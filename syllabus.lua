@@ -7,6 +7,7 @@ ALL = {}
 -- print("\n\n-------->", _VERSION, "\n\n")
 
 function soe(v) -- string or empty
+   if v == 'nil' then v = nil end
    if v~=nil and (type(v) == "string" or v>0) then
       return tostring(v)
    end
@@ -81,7 +82,11 @@ function Item:setValue(name, val, parent)
    if val=="default" and parent ~= nil then
       self:setValue(name, parent[name])
    else
-      self[name] = val
+      t = self
+      if self.totalNames and self.totalNames[name] then
+         t = self.totals
+      end
+      t[name] = val
    end
 end
 
@@ -154,6 +159,17 @@ function Item:setItemName(name, parent)
 end
 
 
+function Item:setTotalNames(tbl)
+   if tbl==nil then return end
+   t = {}
+   for i = 1, #tbl do
+      n = tbl[i]
+      t[n] = true
+   end
+   self.totalNames = t
+   return t
+end
+
 function Item:getItemName(t)
    d = {
       topic = "Тема"
@@ -188,7 +204,7 @@ function Item:asItems(totalNames)
    self.labels = {}
    self.accums = {}
    self.totals = {}
-   self.totalNames = totalNames
+   self:setTotalNames(totalNames)
    return self
 end
 
@@ -206,8 +222,7 @@ function Item:addItem(item, totalNames)
    -- l[topic.index] = item
    t = self.accums
    tn = self.totalNames or {} -- TODO: hack
-   for i = 1, #tn do  -- accumulate
-      n = tn[i]
+   for n, _ in pairs(tn) do  -- accumulate
       t[n] = (t[n] or 0) + (item[n] or 0)
    end
    -- pt(topic, "Added")
@@ -263,8 +278,7 @@ function Item:validate()
    cs = self.totals
    rc = {}
    tn = self.totalNames or {} -- TODO: hack
-   for i = 1, #tn do
-      k = tn[i]
+   for k, _ in pairs(tn) do
       v = self:validateOne(k, ts[k], cs[k])
       if v then
          table.insert(rc, v)
@@ -285,7 +299,8 @@ end
 
 function Item:topicValidation()
    -- pt(Topics)
-   val = self:validate()
+   -- val = self:validate()
+   val = {}  -- TODO: hack
    if #val > 0 then
       pref = "\\item \\color{red} "
       body = table.concat(val, "\n" .. pref)
@@ -327,60 +342,43 @@ function Item:workValidation(total)
    end
 end
 
-function Item:generateContentByTopic(o)
-   if o == nil then
-      o = self
-   else
-      o = Item:new(o)
-   end
-
-   f = ALL.files["cbt"] -- ContentByTopic
-   -- f:write([[\renewcommand{\syll@contentbytopic}[0]{]])
-   f:write("\\def\\itemname{" .. o.itemname .. "}%\n")
-   f:write([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
+function Item:generateContentByTopic()
+   -- f = ALL.files["cbt"] -- ContentByTopic
+   -- tex.sprint([[\renewcommand{\syll@contentbytopic}[0]{]])
+   tex.sprint("\\def\\itemname{" .. self.itemname .. "}%\n")
+   tex.sprint([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
   \hline
   \SetCell[r=3]{c} Раздел дисциплины~/ тема &
   \SetCell[r=3]{c} Семес. &
   \SetCell[c=4]{c} Виды учебной работы & & & &
   \SetCell[r=3]{l} Формы текущего контроля; Формы промежут. аттестации \\\hline
-  & &  \SetCell[c=3]{l,4cm} Контактная работа преподавателя с обучающимися & & &
+  & &  \SetCell[c=3]{c,4.4cm} Контактная работа преподавателя с обучающимися & & &
   \SetCell[r=2]{c} Самост. работа & \\ \hline
   & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]])
-   f:write("\n")
-   for i=1, #o.items do
-      t = o.items[i]
-      f:write("\\itemname~")
-      f:write(soe(t.index) .. ".~" .. t.title .. " & ")
-      f:write(soe(t.term) .. " & ")
-      f:write(soe(t.lec) .. " & ")
-      f:write(soe(t.lab) .. " & ")
-      f:write(soe(t.sem) .. " & ")
-      f:write(soe(t.per) .. " & ")
-      f:write(self.control .. " \\\\\\hline\n")
+   tex.sprint("\n")
+   for i=1, #self.items do
+      t = self.items[i]
+      tex.sprint("\\itemname~")
+      tex.sprint(soe(t.index) .. ".~" .. t.title .. " & ")
+      tex.sprint(soe(t.term) .. " & ")
+      tex.sprint(soe(t.lec) .. " & ")
+      tex.sprint(soe(t.lab) .. " & ")
+      tex.sprint(soe(t.sem) .. " & ")
+      tex.sprint(soe(t.per) .. " & ")
+      tex.sprint(self.control .. " \\\\\\hline\n")
    end
-   cc = o.totals
-   c = {}
-   for k,v in pairs(cc) do
-      c[k] = soe(v)
-   end
-
-   cc=nil
-
-   f:write(string.format([[\SetCell[c=2]{c}Итого ({%s} семестр) & & %s & %s & %s
+   c = self.totals
+   tex.sprint(string.format([[\SetCell[c=2]{c}Итого (%s семестр) & & %s & %s & %s
   & %s & %s \\\hline]],
-   soe(o.term),
-   c.lec,
-   c.lab,
-   c.sem,
-   c.per,
-   soe(o.type)))
-   f:write("\n\\end{tblr}")
-   -- f:write("}\n")
+   soe(self.term),
+   soe(c.lec),
+   soe(c.lab),
+   soe(c.sem),
+   soe(c.per),
+   soe(self.testing)))
+   tex.sprint("\n\\end{tblr}")
+   -- tex.sprint("}\n")
 end
-
-
---   totalNames = {"lec", "lab", "sem", "per"}
-
 
 -- ALL.saveState = saveState
 -- ALL.restoreState = restoreState
@@ -402,6 +400,25 @@ function closeFile(ext)
    ALL.files[ext] = nil
 end
 
+
+function getTable(name)
+   prev = ALL.prev
+   if prev ~= nil then
+      prev = prev[name]
+      if prev ~= nil then
+         prev = Item:new(prev)
+      end
+   end
+   return prev
+end
+
+function generateContentByTopic()
+   topics = getTable('topic')
+   if topics then
+      topics:generateContentByTopic()
+   end
+end
+
 ALL.Item = Item
 ALL.pt = pt
 ALL.pl = pl
@@ -410,5 +427,8 @@ ALL.closeFile = closeFile
 ALL.files={}
 ALL.content={}
 ALL.tbl=tbl
+ALL.generateContentByTopic=generateContentByTopic
+
+
 
 return ALL

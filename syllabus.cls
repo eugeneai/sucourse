@@ -164,7 +164,7 @@
   \let\oldtheenumi=\theenumi
   \RenewDocumentCommand{\theenumi}{}{\theitem.\arabic{enumi}}
   \directlua{
-    syll.item = syll.Item:new{index=\theitem, title=\luastring{#2}}
+    syll.item = syll.Item:new{index=\theitem, title=\luastring{#2}, term=syll.items.term}
   }
   \keys_set:nn { syllabus/item } { #1 }
   \directlua{
@@ -204,10 +204,14 @@
   name .default:n = nil,
   hours .code:n = \luadirect{syll.item:setValue('hours', \luastring{#1})},
   hours .default:n = nil,
+  h .code:n = \luadirect{syll.item:setValue('hours', \luastring{#1})},
+  h .default:n = nil,
   topics .code:n = \luadirect{syll.item:setValue('topics', \luastring{#1})},
   topics .default:n = {},
   testing .code:n = \luadirect{syll.item:setValue('testing', \luastring{#1})},
-  testing .default:n = {}
+  testing .default:n = {},
+  totalnames .code:n = \luadirect{syll.item:setTotalNames({#1})},
+  totalnames .default:n = {}
 }
 
 \NewDocumentEnvironment{syll@items}{O{}}
@@ -229,8 +233,7 @@
 
 \NewDocumentEnvironment{topics}{O{}}
 {
-   % \begin{syll@items}[#1,type=topic,itemname=\itemname]
-  \begin{syll@items}[type=topic,itemname={Тема},#1]
+  \begin{syll@items}[totalnames={'lec','lab','sem','per'},type=topic,itemname={Тема},#1]
     \begin{rdfctx}{\rdfsetctx{list}{syll wpdd:itemList !wpdd:TopicList !wpdd:ItemList \luadirect{syll.Item:sprintRDFType()}}}
 }
 {
@@ -307,31 +310,30 @@
 }
 
 \AtEndDocument{
-  \luadirect{syll.closeFile('cbt');syll.tbl.save(syll.content, '\jobname-content.lua')}
+  \luadirect{syll.tbl.save(syll.content, '\jobname-content.lua')}
 }
 
 \def\syll@rerun{\par{\color{red}Требуется повторный запуск \LuaLaTeX}}
 
 \NewDocumentCommand{\contentbytopic}{}{%
-  \noindent{\footnotesize{}\@input{\jobname.cbt}}
-  \luadirect{syll.openFile('\jobname','cbt')}
+  \noindent{\footnotesize{}\luadirect{syll.generateContentByTopic()}}
 }
 
 
 \NewDocumentEnvironment{labworks}{O{}}
-{\begin{works}[type=labwork,itemname={Лабораторная работа},rdftype={LaboratoryWork},#1]}
+{\begin{works}[totalnames={'hours'},type=labwork,itemname={Лабораторная работа},rdftype={LaboratoryWork},#1]}
 {\end{works}}
 
 \NewDocumentEnvironment{personalworks}{O{}}
-{\begin{works}[type=personalwork,itemname={Самостоятельная работа},rdftype={PersonalWork},#1]}
+{\begin{works}[totalnames={'hours'},type=personalwork,itemname={Самостоятельная работа},rdftype={PersonalWork},#1]}
 {\end{works}}
 
 \NewDocumentEnvironment{seminars}{O{}}
-{\begin{works}[type=seminar,itemname={Семинар},rdftype={Seminar},#1]}
+{\begin{works}[totalnames={'hours'},type=seminar,itemname={Семинар},rdftype={Seminar},#1]}
 {\end{works}}
 
 \NewDocumentEnvironment{practicalworks}{O{}}
-{\begin{works}[type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
+{\begin{works}[totalnames={'hours'},type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
 {\end{works}}
 
 
