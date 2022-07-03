@@ -303,7 +303,7 @@
 
 \AtBeginDocument{
   %\@input{\jobname.syll}
-  %\luadirect{syll.Topics:openFile('\jobname' .. '.syll')}
+  \luadirect{syll.prev = syll.tbl.load('\jobname-content.lua')}
 }
 
 \AtEndDocument{
