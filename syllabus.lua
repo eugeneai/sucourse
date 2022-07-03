@@ -327,10 +327,16 @@ function Item:workValidation(total)
    end
 end
 
-function Item:generateContentByTopic()
+function Item:generateContentByTopic(o)
+   if o == nil then
+      o = self
+   else
+      o = Item:new(o)
+   end
+
    f = ALL.files["cbt"] -- ContentByTopic
    -- f:write([[\renewcommand{\syll@contentbytopic}[0]{]])
-   f:write("\\def\\itemname{" .. self.itemname .. "}%\n")
+   f:write("\\def\\itemname{" .. o.itemname .. "}%\n")
    f:write([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
   \hline
   \SetCell[r=3]{c} Раздел дисциплины~/ тема &
@@ -341,8 +347,8 @@ function Item:generateContentByTopic()
   \SetCell[r=2]{c} Самост. работа & \\ \hline
   & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]])
    f:write("\n")
-   for i=1, #self.items do
-      t = self.items[i]
+   for i=1, #o.items do
+      t = o.items[i]
       f:write("\\itemname~")
       f:write(soe(t.index) .. ".~" .. t.title .. " & ")
       f:write(soe(t.term) .. " & ")
@@ -352,7 +358,7 @@ function Item:generateContentByTopic()
       f:write(soe(t.per) .. " & ")
       f:write(self.control .. " \\\\\\hline\n")
    end
-   cc = self.totals
+   cc = o.totals
    c = {}
    for k,v in pairs(cc) do
       c[k] = soe(v)
@@ -362,12 +368,12 @@ function Item:generateContentByTopic()
 
    f:write(string.format([[\SetCell[c=2]{c}Итого ({%s} семестр) & & %s & %s & %s
   & %s & %s \\\hline]],
-   soe(self.term),
+   soe(o.term),
    c.lec,
    c.lab,
    c.sem,
    c.per,
-   soe(self.type)))
+   soe(o.type)))
    f:write("\n\\end{tblr}")
    -- f:write("}\n")
 end
