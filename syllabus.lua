@@ -345,8 +345,9 @@ end
 function Item:generateContentByTopic()
    -- f = ALL.files["cbt"] -- ContentByTopic
    -- tex.sprint([[\renewcommand{\syll@contentbytopic}[0]{]])
-   tex.sprint("\\def\\itemname{" .. self.itemname .. "}%\n")
-   tex.sprint([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
+   s=""
+   s = s .. "\\def\\itemname{" .. self.itemname .. "}%\n"
+   s = s .. [[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
   \hline
   \SetCell[r=3]{c} Раздел дисциплины~/ тема &
   \SetCell[r=3]{c} Семес. &
@@ -354,21 +355,21 @@ function Item:generateContentByTopic()
   \SetCell[r=3]{l} Формы текущего контроля; Формы промежут. аттестации \\\hline
   & &  \SetCell[c=3]{c,4.4cm} Контактная работа преподавателя с обучающимися & & &
   \SetCell[r=2]{c} Самост. работа & \\ \hline
-  & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]])
-   tex.sprint("\n")
+  & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]]
+   s = s .. "\n"
    for i=1, #self.items do
       t = self.items[i]
-      tex.sprint("\\itemname~")
-      tex.sprint(soe(t.index) .. ".~" .. t.title .. " & ")
-      tex.sprint(soe(t.term) .. " & ")
-      tex.sprint(soe(t.lec) .. " & ")
-      tex.sprint(soe(t.lab) .. " & ")
-      tex.sprint(soe(t.sem) .. " & ")
-      tex.sprint(soe(t.per) .. " & ")
-      tex.sprint(self.control .. " \\\\\\hline\n")
+      s = s .. ("\\itemname~")
+      s = s .. (soe(t.index) .. ".~" .. t.title .. " & ")
+      s = s .. (soe(t.term) .. " & ")
+      s = s .. (soe(t.lec) .. " & ")
+      s = s .. (soe(t.lab) .. " & ")
+      s = s .. (soe(t.sem) .. " & ")
+      s = s .. (soe(t.per) .. " & ")
+      s = s .. (self.control .. " \\\\\\hline\n")
    end
    c = self.totals
-   tex.sprint(string.format([[\SetCell[c=2]{c}Итого (%s семестр) & & %s & %s & %s
+   s = s .. (string.format([[\SetCell[c=2]{c}Итого (%s семестр) & & %s & %s & %s
   & %s & %s \\\hline]],
    soe(self.term),
    soe(c.lec),
@@ -376,8 +377,10 @@ function Item:generateContentByTopic()
    soe(c.sem),
    soe(c.per),
    soe(self.testing)))
-   tex.sprint("\n\\end{tblr}")
-   -- tex.sprint("}\n")
+   s = s .. ("\n\\end{tblr}")
+   -- s = s .. ("}\n")
+   tex.print(s)
+   print(s)
 end
 
 -- ALL.saveState = saveState
