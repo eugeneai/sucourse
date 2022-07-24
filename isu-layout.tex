@@ -7,6 +7,7 @@
 {\bfseries \MakeUppercase{ <<\rdf{\ctx{context} ^idd:hasCurriculum ^idd:department rdfs:label}{Иркутский государственный университет}>>}}\par
 {ФГБОУ ВО «ИГУ»}\par}{ИГУ}
 
+\gdef\syl@make@title{%
 \begin{center}%
   \syl@university@preamble
 \vspace{1ex}
@@ -37,10 +38,20 @@
 \vfill
 \vfill
 \begin{center}
-
-  % Иркутск\;--\;2022
   \syl@institute@city~\syl@cirr@year~г.
+\end{center}}
 
-\end{center}
+\newcommand{\disciplinepositionincirriculum}[2]{%
+Учебная дисциплина \rdf{\ctx{disc} dcterms:identifier}{\syl@disc@code}~<<\rdf{\ctx{disc} idd:discipline rdfs:label}{\syl@disc@name}>> относится к
+Блоку~\rdf{\ctx{disc} idd:block dcterms:identifier}{#1} образовательной программы, \rdf{\ctx{disc} idd:blockPart rdfs:comment}{#2}.
+}
+
+\newcommand{\syl@disc@required@text}{Для изучения данной учебной дисциплины необходимы знания, умения и навыки,
+формируемые предшествующими дисциплинами:}
+\newcommand{\syl@disc@ensure@text}{Перечень последующих учебных дисциплин, для которых необходимы знания, умения и
+навыки, формируемые данной учебной дисциплиной:}
+\newcommand{\syl@competence@list@paragraph}{%
+Процесс освоения дисциплины направлен на формирование следующих компетенций в
+соответствии с ФГОС ВО и ОП ВО по направлению подготовки {\syl@spec@code}\;--\;{\syl@spec@name}:}
 
 \makeatother

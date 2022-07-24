@@ -335,18 +335,37 @@
 {\begin{works}[totalnames={'hours'},type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
 {\end{works}}
 
+
+\NewDocumentEnvironment{disciplines}{O{}}{
+  \syl@disc@required@text
+  \begin{enumerate}
+  }{
+    \end{enumerate}
+}
+
 \ExplSyntaxOn
 
-\NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}}
+\NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}\input{\syl@layout@id-layout.tex}}
 
 \NewDocumentEnvironment{cwtitlepage}{}{
   \begin{titlepage}
 }
-{
-  \input{\syl@layout@id-layout.tex}
+{ \syl@make@title
   \end{titlepage}
 }
 
+\def\syl@comp@list@item#1{\@item[]\unskip #1\ -- }
+
+\NewDocumentEnvironment{competencelist}{}{
+  \syl@competence@list@paragraph
+  \list{}{\leftmargin\z@}%
+  % \list{}{\labelwidth\z@ \leftmargin\z@
+  %   \let\makelabel\descriptionlabel}\unskip%
+  \let\item\syl@comp@list@item
+}
+{
+  \endlist
+}
 
 \ExplSyntaxOff
 
