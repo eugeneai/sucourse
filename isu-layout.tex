@@ -1,0 +1,46 @@
+\makeatletter
+\university{%
+\includegraphics{isu.png}\par
+{\bfseries МИНИСТЕРСТВО ОБРАЗОВАНИЯ И НАУКИ РОССИЙСКОЙ ФЕДЕРАЦИИ}\par
+{\bfseries федеральное государственное бюджетное образовательное учреждение}\par
+{\bfseries высшего образования}\par
+{\bfseries \MakeUppercase{ <<\rdf{\ctx{context} ^idd:hasCurriculum ^idd:department rdfs:label}{Иркутский государственный университет}>>}}\par
+{ФГБОУ ВО «ИГУ»}\par}{ИГУ}
+
+\begin{center}%
+  \syl@university@preamble
+\vspace{1ex}
+{\bfseries Кафедра \MakeLowercase{ \rdf{\ctx{disc} idd:chair rdfs:label}{\syl@base@chair@name}} }
+\end{center}
+\vspace{2em}
+\begin{tabularx}{\textwidth}{XX}
+  & УТВЕРЖДАЮ \\
+  & \\
+  & \syl@institute@head@position\;\syl@institute@abbrev\;\syl@university@abbrev\\
+  & \\
+  & \underline{\hspace{4.5cm}}\;\syl@institute@head@name\\
+  & \\
+  & <<\underline{\hspace{1cm}}>>\underline{\hspace{5cm}}~2022~г.
+\end{tabularx}
+\vfill
+\begin{center}\large
+  {\bfseries \MakeUppercase{Рабочая программа дисциплины (модуля)} }\\[1ex]
+\end{center}
+\vfill
+\begin{tblr}{X[4,l]X[5,l]}
+  {\bfseries Наименование дисциплины (модуля):} & {\syl@disc@name} \\
+  {\bfseries Направление подготовки:} & {\syl@spec@code\;--\;\syl@spec@name}\\
+  {\bfseries Направленность (профиль) подготовки:} & {\syl@profile@name}\\
+  {\bfseries Квалификация выпускника:} & {\syl@degree}\\[1em]
+  {\bfseries Форма обучения:} & {\syl@mural}
+\end{tblr}
+\vfill
+\vfill
+\begin{center}
+
+  % Иркутск\;--\;2022
+  \syl@institute@city~\syl@cirr@year~г.
+
+\end{center}
+
+\makeatother

@@ -23,7 +23,6 @@
 
 \LoadClass[12pt]{scrartcl}% Koma script article
 
-
 \RequirePackage{tabularx}
 \RequirePackage{indentfirst}
 \RequirePackage{polyglossia}
@@ -302,7 +301,7 @@
 }{}
 }
 
-\ExplSyntaxOff
+\ExplSyntaxOn
 
 \AtBeginDocument{
   %\@input{\jobname.syll}
@@ -336,5 +335,51 @@
 {\begin{works}[totalnames={'hours'},type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
 {\end{works}}
 
+\ExplSyntaxOn
 
-\NewDocumentEnvironment{syll@tile}{}{}{}
+\NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}}
+
+\NewDocumentEnvironment{cwtitlepage}{}{
+  \begin{titlepage}
+}
+{
+  \input{\syl@layout@id-layout.tex}
+  \end{titlepage}
+}
+
+
+\ExplSyntaxOff
+
+\newcommand\chair[2]{%
+\gdef\syl@base@chair@name{#1}%
+\gdef\syl@base@chair@abbrev{#1}%
+}
+\newcommand\institute[5]{%
+\gdef\syl@institute@name{#1}%
+\gdef\syl@institute@abbrev{#2}%
+\gdef\syl@institute@head@position{#3}%
+\gdef\syl@institute@head@name{#4}%
+\gdef\syl@institute@city{#5}%
+}
+\newcommand\university[2]{%
+\gdef\syl@university@preamble{#1}%
+\gdef\syl@university@abbrev{#2}%
+}
+\newcommand\discipline[2]{%
+\gdef\syl@disc@name{#1}%
+\gdef\syl@disc@code{#2}%
+}
+\newcommand\specialty[2]{%
+\gdef\syl@spec@name{#1}%
+\gdef\syl@spec@code{#2}%
+}
+\newcommand\profile[1]{%
+\gdef\syl@profile@name{#1}%
+}
+\newcommand{\masterdegree}{\gdef\syl@degree{Магистр}}
+\newcommand{\bachelordegree}{\gdef\syl@degree{Бакалавр}}
+\newcommand{\mural}{\gdef\syl@mural{Очная}} % форма обучения
+\newcommand{\extramural}{\gdef\syl@mural{Заочная}} % форма обучения
+\renewcommand{\year}[1]{\gdef\syl@cirr@year{#1}}
+\institute{НЕ УКАЗАН ИНСТИТУТ ИЛИ ФАКУЛЬТЕТ}{АББР}{Директор}{И.И.~Иванов}{ГОРОД N}
+\chair{НЕ УКАЗАНА КАФЕДРА}{КАФ}
