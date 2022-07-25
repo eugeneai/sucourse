@@ -335,7 +335,6 @@
 {\begin{works}[totalnames={'hours'},type=practicalwork,itemname={Практическая работа},rdftype={PracticalWork},#1]}
 {\end{works}}
 
-
 \NewDocumentEnvironment{disciplines}{O{}}{
   \syl@disc@required@text
   \begin{enumerate}
@@ -355,17 +354,36 @@
 }
 
 \def\syl@comp@list@item#1{\@item[]\unskip #1\ -- }
+\def\syl@bold@list@item#1{\@item[]\unskip {\bfseries #1} }
+\def\syl@paragraph@list@item#1{\@item[]\unskip\hspace{\parindent}{\bfseries #1} }
+\def\syl@trivial@list@item#1{\@item[]\unskip #1 }
+
+\NewDocumentEnvironment{syl@list}{}{\list{}{
+  \leftmargin\z@}
+  \let\item\syl@bold@list@item
+}{\endlist}
 
 \NewDocumentEnvironment{competencelist}{}{
+  \syl@competencelist@section
   \syl@competence@list@paragraph
-  \list{}{\leftmargin\z@}%
-  % \list{}{\labelwidth\z@ \leftmargin\z@
-  %   \let\makelabel\descriptionlabel}\unskip%
+  \begin{syl@list}
   \let\item\syl@comp@list@item
 }
 {
-  \endlist
+  \end{syl@list}
 }
+
+\NewDocumentEnvironment{abilities}{}{
+  \syl@abilities@paragraph
+  \begin{syl@list}
+  \let\item\syl@paragraph@list@item
+}{\end{syl@list}}
+
+\NewDocumentEnvironment{aims}{}{
+  \syl@aims@section
+  \begin{syl@list}
+  \let\item\syl@paragraph@list@item
+}{\end{syl@list}}
 
 \ExplSyntaxOff
 
@@ -402,3 +420,4 @@
 \renewcommand{\year}[1]{\gdef\syl@cirr@year{#1}}
 \institute{НЕ УКАЗАН ИНСТИТУТ ИЛИ ФАКУЛЬТЕТ}{АББР}{Директор}{И.И.~Иванов}{ГОРОД N}
 \chair{НЕ УКАЗАНА КАФЕДРА}{КАФ}
+\newcommand{\personalworktechniquesubsection}{\syl@personalworktechniquesubsection@content}
