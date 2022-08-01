@@ -168,9 +168,13 @@
   \keys_set:nn { syllabus/item } { #1 }
   \directlua{
     syll.items:addItem(syll.item)
+    syll.item:startReading()
   }
 }
 {
+  \directlua{
+    syll.item:stopReading()
+  }
   \let\theenumi=\oldtheenumi
   \let\oldtheenumi=\relax
 }
@@ -220,13 +224,14 @@
     syll.items = syll.Item:new{}
     syll.items:asItems()
     syll.item = syll.items
-  }
-  \keys_set:nn { syllabus/item } { #1 }
+   }
+   \keys_set:nn { syllabus/item } { #1 }
+  \directlua{syll.item:startReading()}
 }
 {
+  \directlua{syll.item:stopReading()}
   \directlua{
     syll.content[syll.items.type]=syll.items; syll.items=nil; syll.item=nil}
-
   % TODO: DUMP?
 }
 
@@ -243,12 +248,11 @@
   \end{syll@items}
 }
 
-\NewDocumentEnvironment{topic}{O{}mb}
+\NewDocumentEnvironment{topic}{O{}m}
 {
   \begin{syll@item}[#1]{#2}
   \paragraph{\itemname\ \rdf{item dcterms:identifier}{\protect\theitem}.~\rdf{item rdfs:label}{#2}}\par
   \begin{rdfctx}{\rdfsetctx{item}{list ^schema:member !wpdd:ListItem !wpdd:Topic}}
-  #3
 }
 {
   \end{rdfctx}

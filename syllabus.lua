@@ -383,6 +383,43 @@ function Item:generateContentByTopic()
    print(s)
 end
 
+
+function readBuf(buf)
+   if ALL.readObj ~= nil and ALL.readObj.c ~= nil then
+      ALL.readObj.c:appendBuf(buf)
+   end
+end
+
+function Item:startReading()
+   self.buffer = {}
+   ALL.readObj = { c=self,
+                   p=ALL.readObj}
+   luatexbase.add_to_callback('process_input_buffer', readBuf, 'readbuf')
+   return self
+end
+
+function Item:stopReading()
+   c = ALL.readObj.c
+   p = ALL.readObj.p
+   ALL.readObj = p
+   if p == nil then
+      luatexbase.remove_from_callback('process_input_buffer', 'readbuf')
+   else
+      p.c:appendBuf(table.concat(c.buffer, ' ')) -- TODO: If it should be a table
+   end
+   ALL.bufferRead = c.buffer
+   self:printRead()
+   return c
+end
+
+function Item:printRead()
+   print(string.format("Lua: ------\n %s \n ------\n", table.concat(self.buffer), ' '))
+end
+
+function Item:appendBuf(buf)
+   table.insert(self.buffer, buf)
+end
+
 -- ALL.saveState = saveState
 -- ALL.restoreState = restoreState
 
