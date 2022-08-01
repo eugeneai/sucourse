@@ -443,7 +443,7 @@
 }{\end{syl@list}}
 
 \NewDocumentEnvironment{content}{}{
-\syll@content@section
+\syl@content@section
 }{}
 
 
