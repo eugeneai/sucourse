@@ -41,9 +41,15 @@
   \syl@institute@city~\syl@cirr@year~г.
 \end{center}}
 
+\newcommand{\syl@disciplinepositionincirriculum@section}{\section{Место дисциплины в структуре ОПОП ВО}}
 \newcommand{\disciplinepositionincirriculum}[2]{%
+\syl@disciplinepositionincirriculum@section
 Учебная дисциплина \rdf{\ctx{disc} dcterms:identifier}{\syl@disc@code}~<<\rdf{\ctx{disc} idd:discipline rdfs:label}{\syl@disc@name}>> относится к
 Блоку~\rdf{\ctx{disc} idd:block dcterms:identifier}{#1} образовательной программы, \rdf{\ctx{disc} idd:blockPart rdfs:comment}{#2}.
+}
+\newcommand{\syl@content@section}{\section{Содержание и структура дисциплины}}
+\newcommand\disciplinecontent[3]{Объем дисциплины составляет \rdf{\ctx{disc} idd:credits idd:expert}{#1} зачетных ед., \rdf{\ctx{disc} idd:hours idd:expert}{#2} час.\par
+Форма промежуточной аттестации: \rdf{\ctx{disc} idd:controlType rdfs:label}{#3}.\par
 }
 
 \newcommand{\syl@disc@required@text}{Для изучения данной учебной дисциплины необходимы знания, умения и навыки,
@@ -57,7 +63,11 @@
 \newcommand{\syl@aims@section}{\section{Цели и задачи дисциплины}}
 %\newcommand{\syl@@section}{\section{Цели и задачи дисциплины}}
 \newcommand{\syl@competencelist@section}{\section{Требования к результатам освоения дисциплины}}
-\newcommand{\syl@infosupport@section}{\section{Учебно"=методическое и информационное обеспечение дисциплины}}
+\newcommand{\syl@infosupport@section}{\section{Учебно-методическое и информационное обеспечение дисциплины}}
+\newcommand{\syl@techsupport@section}{\section{Материально-техническое обеспечение дисциплины}}
+\newcommand{\syl@warelist@section}[1]{\subsection{#1}}
+\newcommand{\defaultwarelist}[1]{\subsection{#1}}
+\newcommand{\syl@labwork@section}{\paragraph{Примеры оценочных средств текущего контроля}\vspace{1em}}
 \newcommand{\syl@personalworktechniquesubsection@content}{\subsection{Методические указания по организации самостоятельной работы студентов} % 4.4
 %
 Самостоятельная работа студентов всех форм и видов обучения является одним из
@@ -67,7 +77,7 @@
 обязательным компонентом образовательного процесса, так как она обеспечивает
 закрепление получаемых на лекционных занятиях знаний путем приобретения навыков
 осмысления и расширения их содержания, навыков решения актуальных проблем
-формирования общекультурных и профессиональных компетенций, научно"=исследовательской деятельности, подготовки к семинарам, лабораторным работам, сдаче зачетов и экзаменов. Самостоятельная работа студентов представляет собой совокупность аудиторных и внеаудиторных занятий и работ.\par
+формирования общекультурных и профессиональных компетенций, научно-исследовательской деятельности, подготовки к семинарам, лабораторным работам, сдаче зачетов и экзаменов. Самостоятельная работа студентов представляет собой совокупность аудиторных и внеаудиторных занятий и работ.\par
 Самостоятельная работа в рамках
 образовательного процесса в вузе решает следующие задачи:
 \begin{itemize}
@@ -160,5 +170,9 @@
 регламентируется Положением о самостоятельной работе студентов, принятым Ученым
 советом ИГУ 22~июня~2012~г.
 }
+
+\AtEndDocument{\vspace{1em}\vfill
+\paragraph{\normalfont Разработчик:\;}%
+\rdf{syll wpdd:courseDC schema:author {foaf:name rdf:label} !foaf:Person }{\syl@cirr@author}}
 
 \makeatother

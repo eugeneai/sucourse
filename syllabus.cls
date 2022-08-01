@@ -157,11 +157,8 @@
 }
 
 
-\NewDocumentEnvironment{syll@item}{O{}m}
+\NewDocumentEnvironment{syll@item@base}{O{}m}
 {
-  \refstepcounter{syll@item}
-  \let\oldtheenumi=\theenumi
-  \RenewDocumentCommand{\theenumi}{}{\theitem.\arabic{enumi}}
   \directlua{
     syll.item = syll.Item:new{index=\theitem, title=\luastring{#2}, term=syll.items.term}
   }
@@ -170,11 +167,21 @@
     syll.items:addItem(syll.item)
     syll.item:startReading()
   }
-}
-{
+}{
   \directlua{
     syll.item:stopReading()
   }
+}
+
+\NewDocumentEnvironment{syll@item}{O{}m}
+{
+  \refstepcounter{syll@item}
+  \let\oldtheenumi=\theenumi
+  \RenewDocumentCommand{\theenumi}{}{\theitem.\arabic{enumi}}
+  \begin{syll@item@base}[#1]{#2}
+}
+{
+  \end{syll@item@base}
   \let\theenumi=\oldtheenumi
   \let\oldtheenumi=\relax
 }
@@ -324,7 +331,9 @@
 
 
 \NewDocumentEnvironment{labworks}{O{}}
-{\begin{works}[totalnames={'hours'},type=labwork,itemname={Лабораторная работа},rdftype={LaboratoryWork},#1]}
+{
+\syl@labwork@section
+\begin{works}[totalnames={'hours'},type=labwork,itemname={Лабораторная работа},rdftype={LaboratoryWork},#1]}
 {\end{works}}
 
 \NewDocumentEnvironment{personalworks}{O{}}
@@ -355,15 +364,35 @@
   \end{syll@items}
 }
 
-\NewDocumentEnvironment{referencelist}{mm}
+\NewDocumentEnvironment{techsupport}{}
 {
-  \noindent \IfValueT{#1}{#1)\;}#2:\par
-  \begin{syll@item}[]{#2}
+  \syl@techsupport@section
+  \begin{syll@items}[type=techsupport]
+}
+{
+  \end{syll@items}
+}
+
+\NewDocumentEnvironment{referencelist}{om}
+{
+  \noindent \IfNoValueTF{#1}{}{#1)\;}#2:\par
+  \begin{syll@item@base}[]{#2}
   \begin{enumerate}
 }
 {
   \end{enumerate}
-  \end{syll@item}
+  \end{syll@item@base}
+}
+
+\NewDocumentEnvironment{warelist}{m}
+{
+  \syl@warelist@section{#1}
+  \begin{syll@item@base}[]{#1}
+    \begin{enumerate}
+}
+{
+  \end{enumerate}
+  \end{syll@item@base}
 }
 
 
@@ -371,11 +400,14 @@
 
 \NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}\input{\syl@layout@id-layout.tex}}
 
-\NewDocumentEnvironment{cwtitlepage}{}{
+\NewDocumentEnvironment{cwtitle}{}{
   \begin{titlepage}
 }
 { \syl@make@title
-  \end{titlepage}
+\end{titlepage}
+\newpage
+\tableofcontents
+\newpage
 }
 
 \def\syl@comp@list@item#1{\@item[]\unskip #1\ -- }
@@ -410,6 +442,11 @@
   \let\item\syl@paragraph@list@item
 }{\end{syl@list}}
 
+\NewDocumentEnvironment{content}{}{
+\syll@content@section
+}{}
+
+
 \ExplSyntaxOff
 
 \newcommand\chair[2]{%
@@ -443,6 +480,8 @@
 \newcommand{\mural}{\gdef\syl@mural{Очная}} % форма обучения
 \newcommand{\extramural}{\gdef\syl@mural{Заочная}} % форма обучения
 \renewcommand{\year}[1]{\gdef\syl@cirr@year{#1}}
+\renewcommand{\author}[1]{\gdef\syl@cirr@author{#1}}
+\author{Иванов~И.И., к.т.н., доцент... (НАДО ЗАПОЛНИТЬ)}
 \institute{НЕ УКАЗАН ИНСТИТУТ ИЛИ ФАКУЛЬТЕТ}{АББР}{Директор}{И.И.~Иванов}{ГОРОД N}
 \chair{НЕ УКАЗАНА КАФЕДРА}{КАФ}
 \newcommand{\personalworktechniquesubsection}{\syl@personalworktechniquesubsection@content}

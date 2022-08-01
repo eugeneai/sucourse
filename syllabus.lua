@@ -405,7 +405,8 @@ function Item:stopReading()
    if p == nil then
       luatexbase.remove_from_callback('process_input_buffer', 'readbuf')
    else
-      p.c:appendBuf(table.concat(c.buffer, ' ')) -- TODO: If it should be a table
+      -- p.c:appendBuf(table.concat(c.buffer, ' ')) -- TODO: If it should be a table
+      p.c:appendBuf(c.buffer)
    end
    ALL.bufferRead = c.buffer
    self:printRead()
