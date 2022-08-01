@@ -231,7 +231,7 @@
 {
   \directlua{syll.item:stopReading()}
   \directlua{
-    syll.content[syll.items.type]=syll.items; syll.items=nil; syll.item=nil}
+    syll.content[syll.items.type]=syll.items}
   % TODO: DUMP?
 }
 
@@ -345,6 +345,27 @@
   }{
     \end{enumerate}
 }
+
+\NewDocumentEnvironment{infosupport}{}
+{
+  \syl@infosupport@section
+  \begin{syll@items}[type=infosupport]
+}
+{
+  \end{syll@items}
+}
+
+\NewDocumentEnvironment{referencelist}{mm}
+{
+  \noindent \IfValueT{#1}{#1)\;}#2:\par
+  \begin{syll@item}[]{#2}
+  \begin{enumerate}
+}
+{
+  \end{enumerate}
+  \end{syll@item}
+}
+
 
 \ExplSyntaxOn
 
