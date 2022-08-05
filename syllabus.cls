@@ -397,6 +397,39 @@
 }
 
 
+
+\NewDocumentEnvironment{attestation}{o}
+{
+  \syl@attestation@section
+  \begin{syll@items}[type=attestation]
+}
+{
+  \end{syll@items}
+}
+
+\NewDocumentEnvironment{questions}{}
+{
+  \syl@questions@section
+  \begin{syll@items}[type=questions]
+    \begin{enumerate}
+}
+{
+\end{enumerate}
+\end{syll@items}
+}
+
+\NewDocumentEnvironment{examples}{}
+{
+  \syl@examples@section
+  \begin{syll@items}[type=examples]
+    \begin{enumerate}
+}
+{
+\end{enumerate}
+\end{syll@items}
+}
+
+
 \ExplSyntaxOn
 
 \NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}\input{\syl@layout@id-layout.tex}}
