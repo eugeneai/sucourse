@@ -326,6 +326,7 @@
 \def\syll@rerun{\par{\color{red}Требуется повторный запуск \LuaLaTeX}}
 
 \NewDocumentCommand{\contentbytopic}{}{%
+  \syl@contentbytopic@section
   \noindent{\footnotesize{}\luadirect{syll.generateContentByTopic()}}
 }
 

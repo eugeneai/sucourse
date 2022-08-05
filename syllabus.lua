@@ -342,12 +342,22 @@ function Item:workValidation(total)
    end
 end
 
+function Item:tprint(s)
+   tex.print(s)
+   print(s)
+end
+
+function Item:tsprint(s)
+   tex.sprint(s)
+   print(s)
+end
+
 function Item:generateContentByTopic()
    -- f = ALL.files["cbt"] -- ContentByTopic
-   -- tex.sprint([[\renewcommand{\syll@contentbytopic}[0]{]])
-   s=""
-   s = s .. "\\def\\itemname{" .. self.itemname .. "}%\n"
-   s = s .. [[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
+   -- self:tsprint([[\renewcommand{\syll@contentbytopic}[0]{]])
+   self:tprint("%%%% PRINTING: ContentByTopic %%%%%%")
+   self:tprint("\\def\\itemname{" .. self.itemname .. "}%")
+   self:tprint([[\begin{tblr}{|X[4,l]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[1,c]|X[2,l]|}
   \hline
   \SetCell[r=3]{c} Раздел дисциплины~/ тема &
   \SetCell[r=3]{c} Семес. &
@@ -355,9 +365,9 @@ function Item:generateContentByTopic()
   \SetCell[r=3]{l} Формы текущего контроля; Формы промежут. аттестации \\\hline
   & &  \SetCell[c=3]{c,4.4cm} Контактная работа преподавателя с обучающимися & & &
   \SetCell[r=2]{c} Самост. работа & \\ \hline
-  & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]]
-   s = s .. "\n"
+  & &  Лекции & Лаб. занятия & Практ. занятия & & \\\hline]])
    for i=1, #self.items do
+      s = ""
       t = self.items[i]
       s = s .. ("\\itemname~")
       s = s .. (soe(t.index) .. ".~" .. t.title .. " & ")
@@ -366,21 +376,22 @@ function Item:generateContentByTopic()
       s = s .. (soe(t.lab) .. " & ")
       s = s .. (soe(t.sem) .. " & ")
       s = s .. (soe(t.per) .. " & ")
-      s = s .. (self.control .. " \\\\\\hline\n")
+      s = s .. (self.control .. " \\\\\\hline")
+      self:tprint(s)
    end
    c = self.totals
-   s = s .. (string.format([[\SetCell[c=2]{c}Итого (%s семестр) & & %s & %s & %s
-  & %s & %s \\\hline]],
+   s = (string.format([[\SetCell[c=2]{c}Итого (%s семестр) & & %s & %s & %s
+   & %s & %s \\\hline]],
    soe(self.term),
    soe(c.lec),
    soe(c.lab),
    soe(c.sem),
    soe(c.per),
    soe(self.testing)))
-   s = s .. ("\n\\end{tblr}")
+   self:tprint(s)
+   self:tprint("\\end{tblr}")
    -- s = s .. ("}\n")
-   tex.print(s)
-   print(s)
+   -- self:tprint("CONTENT BY TOPIC\n")
 end
 
 
@@ -457,6 +468,8 @@ function generateContentByTopic()
    topics = getTable('topic')
    if topics then
       topics:generateContentByTopic()
+   else
+      tex.print("ERROR: Не найдено таблицы 'topic'")
    end
 end
 
