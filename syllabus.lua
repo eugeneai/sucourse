@@ -416,16 +416,58 @@ function Item:stopReading()
    if p == nil then
       luatexbase.remove_from_callback('process_input_buffer', 'readbuf')
    else
-      -- p.c:appendBuf(table.concat(c.buffer, ' ')) -- TODO: If it should be a table
-      p.c:appendBuf(c.buffer)
+      p.c:appendBuf(c.buffer) -- Include as a sub-buffer in the buffer
    end
    ALL.bufferRead = c.buffer
-   self:printRead()
+   self:printBuffer()
    return c
 end
 
-function Item:printRead()
-   print(string.format("Lua: ------\n %s \n ------\n", table.concat(self.buffer), ' '))
+function Item:printBuffer(buf)
+   if buf == nil then
+      buf = self.buffer
+   end
+   tmp = {}
+   print("Lua: ------")
+   for k,v in pairs(buf) do
+      if type(v) == "table" then
+         print("subbuf: " .. tostring(v))
+         self:printBuffer(v)
+      else
+         print(v)
+      end
+   end
+   print("------")
+end
+
+function Item:bufferToJSON(buf, nodetype)
+   -- Having buffer consisting list of strings and tables
+   -- Convert to JSON
+   if buf == nil then
+      buf = self.buffer
+      nodetype = self.type
+   end
+   if nodetype then
+      s = string.format([[{"type":"%s",]], self.type)
+   else
+      s = "{"
+   end
+   s = s .. "\"buffer\":[\n"
+   for k, v in pairs(buf) do
+      -- print(k, "=", v)
+      if type(v) == "table" then
+         s = s .. self:bufferToJSON(v)
+      else
+         v = string.gsub(v, [[\]], [[\\]])
+         v = string.gsub(v, [["]], [[\"]])
+         s = s .. [["]] .. v .. [["]]
+      end
+      s = s .. ",\n"
+   end
+   s = s .. [[""]]
+   s = s .. "]}"
+   -- print(s)
+   return s
 end
 
 function Item:appendBuf(buf)

@@ -239,7 +239,6 @@
   \directlua{syll.item:stopReading()}
   \directlua{
     syll.content[syll.items.type]=syll.items}
-  % TODO: DUMP?
 }
 
 \NewDocumentEnvironment{topics}{O{}}
@@ -362,7 +361,12 @@
   \begin{syll@items}[type=infosupport]
 }
 {
-  \end{syll@items}
+\end{syll@items}
+% Using buffer
+\luadirect{
+  print("INFO:~JSON~in~infosupport~---");
+  json=syll.items:bufferToJSON();
+  print(json)}
 }
 
 \NewDocumentEnvironment{techsupport}{}
