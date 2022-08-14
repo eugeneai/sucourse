@@ -14,6 +14,7 @@ SM_RE = re.compile(r"-\s*[0-9]{1,2}\s*см.?\s*")
 # print(ISBNS_RE.findall(a))
 # quit()
 
+
 def query(terms, number=20):
     data = {
         "X_S21P03":
@@ -63,7 +64,7 @@ def query(terms, number=20):
     }
 
     # print(a.decode("utf8"))
-    filename = "post-{}.html".format('-'.join(terms)[:20]) # a cache file
+    filename = "post-{}.html".format('-'.join(terms)[:20])  # a cache file
     if not os.path.exists(filename):
         rc = rq.post(URL, data=data)
         f = open(filename, "w")
@@ -72,16 +73,19 @@ def query(terms, number=20):
     with open(filename, "r") as f:
         text = f.read()
     tree = fromstring(text)
-    trs = tree.xpath('''//form[@name="SEARCH_FORM"]/table[@class="advanced"]/tr''')
+    trs = tree.xpath(
+        '''//form[@name="SEARCH_FORM"]/table[@class="advanced"]/tr''')
     trs = trs[2:-1]
     for row in trs:
         yield proctablerow(row)
+
 
 def location(s):
     # s = s.strip()
     # where, number = s.rsplit("(", 1)
     # number.strip(")")
     return s
+
 
 def exemplars(s):
     """Process the string like:
@@ -91,6 +95,7 @@ def exemplars(s):
     s = recordsplit(s, "Свободны:", ex, "in_stock", location)
     number, rest = s.split("Инв.")
     return int(number.strip())
+
 
 def proctablerow(row):
     pcol, refcol = row[0], row[1]
@@ -103,7 +108,7 @@ def proctablerow(row):
     parts = rawstr.split("\xa0\xa0\xa0")
     parts = [p.strip() for p in parts]
     rec["__STR__"] = rawstr
-    parts = parts[:3]+[' '.join(parts[3:])]
+    parts = parts[:3] + [' '.join(parts[3:])]
     rec["__PARTS__"] = parts
     udcmain, bibmark, author, record = parts
     rec["udcmain"] = udcmain
@@ -124,17 +129,20 @@ def proctablerow(row):
     def _isbn(x):
         return ISBNS_RE.findall(x)
 
-    record = recordsplit(record, "Кл.слова (ненормированные):", rec, "keywords", _split)
+    record = recordsplit(record, "Кл.слова (ненормированные):", rec,
+                         "keywords", _split)
     record = recordsplit(record, "Кл.слова:", rec, "keywords", _split)
     record = recordsplit(record, "Рубрики:", rec, "rubrics", _split)
     rec["issueraw"] = record
     record = recordsplit(record, "УДК", rec, "UDC", _ssplit)
-    record = recordsplit(record, "ISBN", rec, "ISBN", _isbn) # TODO: process all ISBNs
+    record = recordsplit(record, "ISBN", rec, "ISBN",
+                         _isbn)  # TODO: process all ISBNs
     record = record.rstrip("-").rstrip()
     record = SM_RE.sub("- ", record, 1)
     record = ' '.join(record.split())
     rec["issue"] = record
     return rec
+
 
 def recordsplit(record, textfield, rec, name, proc=None):
     parts = [p.strip() for p in record.rsplit(textfield, maxsplit=1)]
