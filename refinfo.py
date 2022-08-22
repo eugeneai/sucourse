@@ -4,6 +4,7 @@ from pprint import pprint
 import pymorphy2
 import ucto
 from queryref import query
+from storage import storeref
 
 uctoconfig = "tokconfig-rus"
 UCTOTOCKENIZER = ucto.Tokenizer(uctoconfig)
@@ -77,12 +78,13 @@ def canonize(ref, pos):
     return filtered, words, tagsmorphy
 
 
-def refdata(ref, pos=VALUABLE_POS, npos=BAD_POS):
+def reflisrecords(ref, pos=VALUABLE_POS, npos=BAD_POS, number=20):
     filtered, words, tagged = canonize(ref, pos=pos)
-    for rec in query(filtered):
+    for rec in query(filtered, number=number):
         del rec["__RAW__"]
         del rec['__PARTS__']
-        print(rec["count"])
+        # print(rec["count"])
+        yield rec
 
 
 def refsinjson(JSON):
@@ -103,7 +105,8 @@ def refsinjson(JSON):
     refs = ITEM_RE.split(text)
     refs = [r for r in refs if r]
     for r in refs:
-        yield refdata(r)
+        yield list(reflisrecords(r))  # yield all found in a LIS records
+                                      # processed as list
 
 
 def checklit(luabuf):
@@ -122,5 +125,8 @@ def checklit(luabuf):
 
 if __name__ == "__main__":
     buf = json.loads(JSON)
-    for dt in refsinjson(buf):
-        pprint(dt)
+    for dts in refsinjson(buf):
+        for dt in dts:
+            print("-------------------")
+            pprint(dt)
+            storeref(dt)
