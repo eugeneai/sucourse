@@ -141,6 +141,13 @@ def proctablerow(row):
     record = SM_RE.sub("- ", record, 1)
     record = ' '.join(record.split())
     rec["issue"] = record
+    # Try to extract Document title
+    tp = record.split("/", maxsplit=1)
+    if len(tp) == 1:
+        title = record
+    else:
+        title = tp[0]
+    rec["title"] = title
     return rec
 
 

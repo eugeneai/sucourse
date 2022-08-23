@@ -109,6 +109,37 @@ def refsinjson(JSON):
                                       # processed as list
 
 
+def refauthor(ref, connector='~'):
+    fn, name = ref.get('author', '')
+    np = name.split()
+    np = ['{}.'.format(n[0]) for n in np] + [fn]
+    return '~'.join(np)
+
+
+def reflistwithcounts(JSON):
+    for dts in refsinjson(buf):
+        # choose one with the greatest number of instances
+        c = 0
+        ref = None
+        for dt in dts:
+            # print("-------------------")
+            storeref(dt)
+            c1 = dt['count']
+            if c1 > c: # prefer one with greatest count
+                ref = dt
+                c = c1
+            elif c1 == c:
+                if int(dt['year']) > int(ref['year']):  # prefer new one
+                    ref = dt
+
+        dt = ref
+        s = "{}~--~{}~экз.".format(dt['issue'], dt['count'])
+        author = refauthor(dt)
+        if author:
+            s = author + '.~' + s
+        yield s, dt
+
+
 def checklit(luabuf):
     bl = luabuf["buffer"]
     text = " ".join(bl)
@@ -125,8 +156,5 @@ def checklit(luabuf):
 
 if __name__ == "__main__":
     buf = json.loads(JSON)
-    for dts in refsinjson(buf):
-        for dt in dts:
-            print("-------------------")
-            pprint(dt)
-            storeref(dt)
+    for ref, dt in reflistwithcounts(JSON):
+        print(r'\item', ref, r'\label{id%s}' % dt['ref_id'])
