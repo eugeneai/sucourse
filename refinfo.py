@@ -119,20 +119,24 @@ def refauthor(ref, connector='~'):
 FIELD_POST_RE = re.compile(r'([0-9]+(-[а-я]+)?)\s([A-Za-zА-Яа-я]+\.?)')
 LET_DOT_RE = re.compile(r'([A-ZА-Я]\.)\s')
 FIELD_RE = re.compile(r'\s([A-Za-zА-Яа-я]+)(\.?)\s?([0-9]+)')
-DOUBLE_RE = re.compile(r'([;\.,])(\s?)\1')
+DOUBLE_RE = re.compile(r'([;\.,])(\s)\1')
+TEXT_RE = re.compile(r'(\s?)\[[Тт]екст\](\s?)')
 
 def refinedissue(ref):
     issue = ref['issue']
     print("Orig:", issue, '\n\n')
+    if 'URL:' not in issue and 'url:' not in issue:
+        issue = TEXT_RE.sub(r'\1\2', issue)
     issue = ' '.join(issue.split())
+    issue = DOUBLE_RE.sub(r'\1\2', issue)
     issue = issue.replace(' - ', '~-- ')
     issue = issue.replace(' : ', r'\;:~')
     issue = DOUBLE_RE.sub(r'\1\2', issue)
     issue = FIELD_POST_RE.sub(r'\1~\3', issue)
     issue = LET_DOT_RE.sub(r'\1~', issue)
     issue = FIELD_RE.sub(r' \1\2~\3', issue)
-    issue = issue.replace(' ;', ';')
-    issue = issue.replace(' /', '~/')
+    issue = issue.replace(' ;', r'\;;')
+    issue = issue.replace(' /', r'\;/')
     issue = issue.replace(' ~', '~')
     return issue
 
