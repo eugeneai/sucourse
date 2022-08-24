@@ -106,14 +106,35 @@ def refsinjson(JSON):
     refs = [r for r in refs if r]
     for r in refs:
         yield list(reflisrecords(r))  # yield all found in a LIS records
-                                      # processed as list
+        # processed as list
 
 
 def refauthor(ref, connector='~'):
     fn, name = ref.get('author', '')
     np = name.split()
-    np = ['{}.'.format(n[0]) for n in np] + [fn]
+    np = [fn] + ['{}.'.format(n[0]) for n in np]
     return '~'.join(np)
+
+
+FIELD_POST_RE = re.compile(r'([0-9]+(-[а-я]+)?)\s([A-Za-zА-Яа-я]+\.?)')
+LET_DOT_RE = re.compile(r'([A-ZА-Я]\.)\s')
+FIELD_RE = re.compile(r'\s([A-Za-zА-Яа-я]+)(\.?)\s?([0-9]+)')
+DOUBLE_RE = re.compile(r'([;\.,])(\s?)\1')
+
+def refinedissue(ref):
+    issue = ref['issue']
+    print("Orig:", issue, '\n\n')
+    issue = ' '.join(issue.split())
+    issue = issue.replace(' - ', '~-- ')
+    issue = issue.replace(' : ', r'\;:~')
+    issue = DOUBLE_RE.sub(r'\1\2', issue)
+    issue = FIELD_POST_RE.sub(r'\1~\3', issue)
+    issue = LET_DOT_RE.sub(r'\1~', issue)
+    issue = FIELD_RE.sub(r' \1\2~\3', issue)
+    issue = issue.replace(' ;', ';')
+    issue = issue.replace(' /', '~/')
+    issue = issue.replace(' ~', '~')
+    return issue
 
 
 def reflistwithcounts(JSON):
@@ -125,7 +146,7 @@ def reflistwithcounts(JSON):
             # print("-------------------")
             storeref(dt)
             c1 = dt['count']
-            if c1 > c: # prefer one with greatest count
+            if c1 > c:  # prefer one with greatest count
                 ref = dt
                 c = c1
             elif c1 == c:
@@ -133,10 +154,11 @@ def reflistwithcounts(JSON):
                     ref = dt
 
         dt = ref
-        s = "{}~--~{}~экз.".format(dt['issue'], dt['count'])
+        issue = refinedissue(dt)
+        s = "{}~--~{}~экз.".format(issue, dt['count'])
         author = refauthor(dt)
         if author:
-            s = author + '.~' + s
+            s = author + '~' + s
         yield s, dt
 
 
