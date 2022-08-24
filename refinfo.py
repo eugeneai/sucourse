@@ -141,6 +141,12 @@ def refinedissue(ref):
     return issue
 
 
+TRANSLIT = str.maketrans(
+    'йцукенгшщзхфывапролджэячсмитбю',
+    'ycukengsszhfyvaproldzeacsmitby',
+    'ъь'
+)
+
 def reflistwithcounts(JSON):
     for dts in refsinjson(buf):
         # choose one with the greatest number of instances
@@ -163,7 +169,14 @@ def reflistwithcounts(JSON):
         author = refauthor(dt)
         if author:
             s = author + '~' + s
-        yield s, dt
+            label = dt['author'][0]
+        else:
+            label = dt['title'][:10]
+
+        pprint(dt)
+        label = label.lower().translate(TRANSLIT) + dt['year']
+
+        yield s, dt, label
 
 
 def checklit(luabuf):
@@ -182,5 +195,5 @@ def checklit(luabuf):
 
 if __name__ == "__main__":
     buf = json.loads(JSON)
-    for ref, dt in reflistwithcounts(JSON):
-        print(r'\item', ref, r'\label{id%s}' % dt['ref_id'])
+    for ref, dt, label in reflistwithcounts(JSON):
+        print(r'\item', ref, r'\label{ref:%s}' % label)

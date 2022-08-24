@@ -97,6 +97,17 @@ def exemplars(s):
     return int(number.strip())
 
 
+YEAR_RE = re.compile(r'-\s*([12][0-9]{3})\.?\s+\-')
+
+
+def figureyear(s):
+    m = YEAR_RE.search(s)
+    if m:
+        return m.group(1)
+    else:
+        return None
+
+
 def proctablerow(row):
     pcol, refcol = row[0], row[1]
     ref_id = pcol.xpath(".//a/@href")[0].split("Z21MFN=")[-1]
@@ -146,8 +157,12 @@ def proctablerow(row):
     if len(tp) == 1:
         title = record
     else:
-        title = tp[0]
+        title = tp[0].strip()
     rec["title"] = title
+
+    year = figureyear(record)
+    if year:
+        rec['year'] = year
     return rec
 
 
