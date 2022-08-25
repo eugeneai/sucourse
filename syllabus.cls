@@ -523,3 +523,13 @@
 \institute{НЕ УКАЗАН ИНСТИТУТ ИЛИ ФАКУЛЬТЕТ}{АББР}{Директор}{И.И.~Иванов}{ГОРОД N}
 \chair{НЕ УКАЗАНА КАФЕДРА}{КАФ}
 \newcommand{\personalworktechniquesubsection}{\syl@personalworktechniquesubsection@content}
+
+
+AtBeginDocument{
+  \luadirect{syll.Item:connectMQ()}
+}
+
+
+AtEndDocument {
+  \luadirect{syll:Item:disconnMQ()}
+}

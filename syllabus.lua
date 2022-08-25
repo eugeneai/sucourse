@@ -1,6 +1,6 @@
 -- json = require("json")
-
-tbl = require("table.save-0.94.lua")
+-- tbl = require("table.save-0.94.lua")
+mq = require("rabbitmqstomp.lua")
 
 ALL = {}
 
@@ -470,6 +470,58 @@ function Item:bufferToJSON(buf, nodetype)
    return s
 end
 
+function mqe(msg)
+   print("ERROR connection to RabbitMQ server", msg)
+end
+
+function Item:connectMQ(connection, host, port)
+   function e(msg)
+      mqe(msg)
+   end
+
+   if connection == nil then
+      connection = {
+         username = "lib",
+         password = "lib@rabbitmq",
+         vhost = "/"
+      }
+   end
+
+   if host == nil then host = "irnok.net" end
+   if port == nil then port = "15672" end -- 5672?
+   self._connection = connection
+   self._mq, err = mq:new(connection)
+   mq = self._mq
+   if err ~= nil then
+      e(msg)
+   else
+      mq:set_timeout(500) -- timeout in microseconds
+      ok, err = mq:connect(host, port)
+      if err ~= nil then
+         e(msg)
+      end
+   end
+end
+
+function Item:sendBuffer(strbuf, chan)
+   mq = self._mq
+   if mq ~= nil then
+      headers = {}
+      headers["content-type"] = "application/json"
+      mq:send(strbuf, headers)
+      mqe("Connection is not established")
+   end
+end
+
+function Item:disconnMQ()
+   mq = self._mq
+   if mq ~= nil then
+      mq:close()
+   else
+      mqe("Connection is not established")
+   end
+end
+
 function Item:appendBuf(buf)
    table.insert(self.buffer, buf)
 end
@@ -522,7 +574,7 @@ ALL.openFile = openFile
 ALL.closeFile = closeFile
 ALL.files={}
 ALL.content={}
-ALL.tbl=tbl
+-- ALL.tbl=tbl
 ALL.generateContentByTopic=generateContentByTopic
 
 
