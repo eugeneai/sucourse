@@ -22,17 +22,19 @@ JSON = r"""{"buffer":[
     ""]}"""
 
 JSON = r"""{"buffer":[
-    "    \\item Ландау Л. Д. Теоретическая физика [Текст] : учеб. пособие для студ. физ. спец. ун-тов : в 10 т. / Л. Д. Ландау, Е. М. Лифшиц. - 8-е изд., стер. - М. : Физматлит. - 22 см. Т. 2 : Теория поля / ред. Л. П. Питаевский. -- 2012. -- 533 с.",
+    "    \\item Ландау Л. Д. Теоретическая физика [Текст] : учеб. пособие для студ. физ. спец. ун-тов : в 10 т. / Л. Д. Ландау, Е. М. Лифшиц. - 8-е изд., стер. - М. : Физматлит. - 22 см. Т. 2 : Теория поля / ред. Л. П. Питаевский. -- 2012. -- 533 с.\\label{landauOOO}\\label{book86} % My comment \\% No comment\n % Another comment\n",
     "    \\end{referencelist}",
     ""]}"""
 
 WORDARG = r"\{[a-zA-Z0-9]+\}"
+LABELARG = r"\{(.+?)\}"
 ITEM_RE = re.compile(r"\\.*?item\s*")
 END_RE = re.compile(r"\s*\\end" + WORDARG)
-LABEL_RE = re.compile(r"\s*\\label" + WORDARG)
+LABEL_RE = re.compile(r"\s*\\label" + LABELARG)  # Contains \1
 DOC_TYPE_RE = re.compile(r"\[.*?\]")
 EX_WORDS_RE = re.compile(r"([Нн]еог|экз)[а-яА-Я.]*")
 YEAR_RE = re.compile("^[1-2][0-9]{3}$")
+LATEX_COMMENT_RE = re.compile(r"[^\\]%")
 VALUABLE_POS = {
     'NOUN', 'ADJF', 'ADJS', 'COMP', 'VERB', 'INFN', 'PRTF', 'PRTS', 'GRND',
     'ADVB', 'PRED', 'LATN'
@@ -66,8 +68,8 @@ def canonize(ref, pos):
     UCTOTOCKENIZER.process(ref)
     words = [str(t) for t in UCTOTOCKENIZER]  # Better tokenizer
     tagsmorphy = [(w, MORPH.parse(w)[0].tag) for w in words]
-    a, b = [(w,t) for w, t in tagsmorphy if _key(t) == 0], \
-        [(w,t) for w, t in tagsmorphy if _key(t) == 1]
+    a, b = [(w, t) for w, t in tagsmorphy if _key(t) == 0], \
+        [(w, t) for w, t in tagsmorphy if _key(t) == 1]
     tagssorted = a + b
     filtered = [(w, t) for w, t in tagssorted if t.POS in pos and len(w) > 2]
     # pprint(filtered)
@@ -78,34 +80,45 @@ def canonize(ref, pos):
     return filtered, words, tagsmorphy
 
 
-def reflisrecords(ref, pos=VALUABLE_POS, npos=BAD_POS, number=20):
+def reflisrecords(ref, pos=VALUABLE_POS, npos=BAD_POS, number=20, labels=[],
+                  comments=None):
     filtered, words, tagged = canonize(ref, pos=pos)
     for rec in query(filtered, number=number):
         del rec["__RAW__"]
         del rec['__PARTS__']
+        if comments is not None:
+            rec["comments"] = comments
+        if labels:
+            rec['labels'] = labels
         # print(rec["count"])
         yield rec
 
 
 def refsinjson(JSON):
-    """Assume it contains list of references as text.
+    r"""Assume it contains list of references as text.
     Each reference started with \item or \bibitem, i.e.
-    a regexp "\\.*?item", "{}" are removed.
+    a regexp r"\\.*?item", "{}" are removed.
     Extract author(s) list,
     possibly empty one, name and year of the publication"""
 
     text = JSON['buffer']  # List of strings.
     text = " ".join(text) if type(text) == list else text
-    text = ' '.join(
-        text.split())  # Replace all whitespace with just one whitespace
     text = DOC_TYPE_RE.sub('', text)
     text = END_RE.sub('', text)
-    text = LABEL_RE.sub('', text)
-    text = EX_WORDS_RE.sub('', text)
     refs = ITEM_RE.split(text)
-    refs = [r for r in refs if r]
+    refs = [r for r in refs if r.strip()]
     for r in refs:
-        yield list(reflisrecords(r))  # yield all found in a LIS records
+        parts = LATEX_COMMENT_RE.split(r, maxsplit=1)
+        if len(parts) > 1:  # There is comments
+            comments = parts[1]
+        else:
+            comments = None
+        user_labels = LABEL_RE.findall(r)
+        r = LABEL_RE.sub('', r)
+        r = EX_WORDS_RE.sub('', r)
+        r = ' '.join(r.split())  # Replace all whitespace with just one whitespace
+        yield list(reflisrecords(r, comments=comments, labels=user_labels))
+        # Yield all found in a LIS records
         # processed as list
 
 
@@ -122,9 +135,10 @@ FIELD_RE = re.compile(r'\s([A-Za-zА-Яа-я]+)(\.?)\s?([0-9]+)')
 DOUBLE_RE = re.compile(r'([;\.,])(\s)\1')
 TEXT_RE = re.compile(r'(\s?)\[[Тт]екст\](\s?)')
 
+
 def refinedissue(ref):
     issue = ref['issue']
-    print("Orig:", issue, '\n\n')
+    # print("Orig:", issue, '\n\n')
     if 'URL:' not in issue and 'url:' not in issue:
         issue = TEXT_RE.sub(r'\1\2', issue)
     issue = ' '.join(issue.split())
@@ -141,11 +155,9 @@ def refinedissue(ref):
     return issue
 
 
-TRANSLIT = str.maketrans(
-    'йцукенгшщзхфывапролджэячсмитбю',
-    'ycukengsszhfyvaproldzeacsmitby',
-    'ъь'
-)
+TRANSLIT = str.maketrans('йцукенгшщзхфывапролджэячсмитбю',
+                         'ycukengsszhfyvaproldzeacsmitby', 'ъь')
+
 
 def reflistwithcounts(JSON):
     for dts in refsinjson(buf):
@@ -173,10 +185,12 @@ def reflistwithcounts(JSON):
         else:
             label = dt['title'][:10]
 
-        pprint(dt)
+        # pprint(dt)
         label = label.lower().translate(TRANSLIT) + dt['year']
-
-        yield s, dt, label
+        label = "ref:"+label
+        comments = dt.get('comments', None)
+        labels = dt.get('labels', [])
+        yield s, dt, labels + [label], comments
 
 
 def checklit(luabuf):
@@ -195,5 +209,10 @@ def checklit(luabuf):
 
 if __name__ == "__main__":
     buf = json.loads(JSON)
-    for ref, dt, label in reflistwithcounts(JSON):
-        print(r'\item', ref, r'\label{ref:%s}' % label)
+    for ref, dt, labels, comments in reflistwithcounts(JSON):
+        labels = ''.join([r"\label{{{}}}".format(lab) for lab in labels])
+        if comments:
+            comments = "% " + comments.strip()
+        else:
+            comments = ''
+        print(r'\item', ref, labels, comments)
