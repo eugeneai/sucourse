@@ -81,11 +81,11 @@ def main():
                    channel=channel,
                    routing_key="out.lib.ref",callback=processing_out_lib_ref)
 
-    out_lib = Chan(name='lis',
-                   exchange=EXCHANGE_NAME,
-                   channel=channel,
-                   routing_key="lis.process.rec.json",
-                   callback=processing_lis_rec_json)
+    lis = Chan(name='lis',
+               exchange=EXCHANGE_NAME,
+               channel=channel,
+               routing_key="lis.process.rec.json",
+               callback=processing_lis_rec_json)
 
     print(' [*] Waiting for messages. To exit press CTRL+C')
     channel.start_consuming()
