@@ -4,8 +4,11 @@ import sys
 import os
 
 
-def processing_callback(ch, method, properties, body):
-    print(" [x] Received %r" % body)
+def processing_callback(ch, method, properties, json):
+    json = json.decode('utf8')
+    print(" [x] Received {}".format(json))
+
+EXHANGE_NAME = 'lib-exchange'
 
 
 def main():
@@ -14,10 +17,18 @@ def main():
 
     channel = connection.channel()
 
-    channel.queue_declare(queue='hello', durable=True)
+    channel.exchange_declare(exchange=EXHANGE_NAME, exchange_type='direct')
 
-    channel.basic_consume(queue='hello',
+    lib_q = channel.queue_declare(queue='lib', durable=True)
+    lib_q_name = lib_q.method.queue
+
+    channel.queue_bind(exchange=EXHANGE_NAME,
+                       routing_key="raw.lib.json",
+                       queue=lib_q_name)
+
+    channel.basic_consume(queue=lib_q_name,
                           on_message_callback=processing_callback,
+                          # routing_key='raw.lib.json',
                           auto_ack=True)
 
     print(' [*] Waiting for messages. To exit press CTRL+C')
