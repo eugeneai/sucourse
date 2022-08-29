@@ -2,15 +2,41 @@
 import pika
 import sys
 import os
+import json
 from refinfo import reflistwithcounts
 
 EXCHANGE_NAME = 'lib-exchange'
 
 
-def processing_raw_lib_json(ch, method, properties, json):
-    json = json.decode('utf8')
-    print(" [x] Received {}".format(json))
-    for ref, dt, labels, comments in reflistwithcounts(json):
+class Chan(object):
+
+    def __init__(self,
+                 name,
+                 channel=None,
+                 routing_key=None,
+                 exchange=EXCHANGE_NAME,
+                 callback=None):
+        self.name = name
+        self.channel = channel
+        self.queue = q = channel.queue_declare(queue=name, durable=True)
+        self.queue_name = q_name = q.method.queue
+        channel.queue_bind(exchange=exchange,
+                           routing_key=routing_key,
+                           queue=q_name)
+        if callable(callback):
+            self.consume(callback)
+
+    def consume(self, callback, auto_ack=True):
+        self.channel.basic_consume(queue=self.queue_name,
+                                   on_message_callback=callback,
+                                   auto_ack=auto_ack)
+
+
+def processing_raw_lib_json(ch, method, properties,
+                            JSON):
+    js = JSON.decode('utf8')
+    print(" [x] Received {}".format(js))
+    for ref, dt, labels, comments in reflistwithcounts(js):
         labels = ''.join([r"\label{{{}}}".format(lab) for lab in labels])
         if comments:
             comments = "% " + comments.strip()
@@ -21,11 +47,19 @@ def processing_raw_lib_json(ch, method, properties, json):
                          routing_key='out.lib.ref',
                          body=message,
                          mandatory=True)
+        ch.basic_publish(exchange=EXCHANGE_NAME,
+                         routing_key="lis.process.rec.json",
+                         body=json.dumps(dt, ensure_ascii=False),
+                         mandatory=True)
 
 
 def processing_out_lib_ref(ch, method, properties, msg):
     msg = msg.decode('utf8')
     print("Received: ", msg)
+
+def processing_lis_rec_json(ch, method, properties, JSON):
+    JSON = JSON.decode('utf8')
+    print("Received to process: ", JSON)
 
 
 def main():
@@ -36,23 +70,22 @@ def main():
 
     channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='direct')
 
-    lib_q = channel.queue_declare(queue='lib', durable=True)
-    lib_q_name = lib_q.method.queue
-    channel.queue_bind(exchange=EXCHANGE_NAME,
-                       routing_key="raw.lib.json",
-                       queue=lib_q_name)
-    channel.basic_consume(queue=lib_q_name,
-                          on_message_callback=processing_raw_lib_json,
-                          auto_ack=True)
+    lib = Chan(name='lib',
+               channel=channel,
+               exchange=EXCHANGE_NAME,
+               routing_key="raw.lib.json",
+               callback=processing_raw_lib_json)
 
-    out_lib_q = channel.queue_declare(queue='out-lib', durable=True)
-    out_lib_q_name = out_lib_q.method.queue
-    channel.queue_bind(exchange=EXCHANGE_NAME,
-                       routing_key="out.lib.ref",
-                       queue=out_lib_q_name)
-    channel.basic_consume(queue=out_lib_q_name,
-                          on_message_callback=processing_out_lib_ref,
-                          auto_ack=True)
+    out_lib = Chan(name='out-lib',
+                   exchange=EXCHANGE_NAME,
+                   channel=channel,
+                   routing_key="out.lib.ref",callback=processing_out_lib_ref)
+
+    out_lib = Chan(name='lis',
+                   exchange=EXCHANGE_NAME,
+                   channel=channel,
+                   routing_key="lis.process.rec.json",
+                   callback=processing_lis_rec_json)
 
     print(' [*] Waiting for messages. To exit press CTRL+C')
     channel.start_consuming()
