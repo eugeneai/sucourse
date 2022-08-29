@@ -8,7 +8,7 @@ from refinfo import reflistwithcounts
 EXCHANGE_NAME = 'lib-exchange'
 
 
-class Chan(object):
+class Queue(object):
 
     def __init__(self,
                  name,
@@ -70,18 +70,18 @@ def main():
 
     channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='direct')
 
-    lib = Chan(name='lib',
+    lib = Queue(name='lib',
                channel=channel,
                exchange=EXCHANGE_NAME,
                routing_key="raw.lib.json",
                callback=processing_raw_lib_json)
 
-    out_lib = Chan(name='out-lib',
+    out_lib = Queue(name='out-lib',
                    exchange=EXCHANGE_NAME,
                    channel=channel,
                    routing_key="out.lib.ref",callback=processing_out_lib_ref)
 
-    lis = Chan(name='lis',
+    lis = Queue(name='lis',
                exchange=EXCHANGE_NAME,
                channel=channel,
                routing_key="lis.process.rec.json",
