@@ -160,6 +160,7 @@ TRANSLIT = str.maketrans('йцукенгшщзхфывапролджэячсми
 
 
 def reflistwithcounts(JSON):
+    buf = json.loads(JSON)
     for dts in refsinjson(buf):
         # choose one with the greatest number of instances
         c = 0
@@ -208,7 +209,6 @@ def checklit(luabuf):
 
 
 if __name__ == "__main__":
-    buf = json.loads(JSON)
     for ref, dt, labels, comments in reflistwithcounts(JSON):
         labels = ''.join([r"\label{{{}}}".format(lab) for lab in labels])
         if comments:
