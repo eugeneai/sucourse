@@ -14,6 +14,7 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{syllabus}[2022/06/30 Syllabus LaTeX class by Irkutsk State University]
 \RequirePackage{luacode}
+\luadirect{print("LUA version:",_VERSION)}
 \luadirect{syll = require('syllabus')}
 \RequirePackage{xparse}
 
