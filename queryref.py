@@ -15,13 +15,13 @@ SM_RE = re.compile(r"-\s*[0-9]{1,2}\s*см.?\s*")
 # quit()
 
 
-def query(terms, number=20):
+def query(terms, number=20, DB="IRCAT"):
     data = {
         "X_S21P03":
         "K=",  # Prefix for search terms, equals to the view dictionary
         "SearchIn": "",
-        "I21DBN": "IRCAT",  # INI file section # IRCAT_PRINT
-        "P21DBN": "IRCAT",  # Name of DB
+        "I21DBN": DB,  # INI file section # IRCAT_PRINT
+        "P21DBN": DB,  # Name of DB  ELEC
         "LNG": "",
         "X_S21STR": " ".join(terms),  # Text to search (full text, stemmed)
         "X_S21P01":
@@ -64,14 +64,16 @@ def query(terms, number=20):
     }
 
     # print(a.decode("utf8"))
-    filename = "post-{}.html".format('-'.join(terms)[:20])  # a cache file
-    if not os.path.exists(filename):
+    # filename = "post-{}.html".format('-'.join(terms)[:20])  # a cache file
+    # if not os.path.exists(filename):
+    if True:
         rc = rq.post(URL, data=data)
-        f = open(filename, "w")
-        f.write(rc.text)
-        f.close()
-    with open(filename, "r") as f:
-        text = f.read()
+        text = rc.text
+    #     f = open(filename, "w")
+    #     f.write(rc.text)
+    #     f.close()
+    # with open(filename, "r") as f:
+    #     text = f.read()
     tree = fromstring(text)
     trs = tree.xpath(
         '''//form[@name="SEARCH_FORM"]/table[@class="advanced"]/tr''')
@@ -109,7 +111,12 @@ def figureyear(s):
 
 
 def proctablerow(row):
-    pcol, refcol = row[0], row[1]
+    if row is None:
+        return None
+    try:
+        pcol, refcol = row[0], row[1]
+    except IndexError:
+        return None
     ref_id = pcol.xpath(".//a/@href")[0].split("Z21MFN=")[-1]
     rec = {}
     rec["ref_id"] = ref_id
@@ -121,7 +128,11 @@ def proctablerow(row):
     rec["__STR__"] = rawstr
     parts = parts[:3] + [' '.join(parts[3:])]
     rec["__PARTS__"] = parts
-    udcmain, bibmark, author, record = parts
+    try:
+        udcmain, bibmark, author, record = parts
+    except ValueError:
+        print(rawstr)
+        return None
     rec["udcmain"] = udcmain
     rec["bibmark"] = bibmark
     rec["author"] = [w.strip() for w in author.split(',')]

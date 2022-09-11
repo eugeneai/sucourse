@@ -92,7 +92,7 @@ def storeref(ref, aux=None):
         return
 
     R = genid(LIBDB)
-    udc = ref["UDC"]
+    udc = ref.get("UDC",[])
     g.add((R, DCTERMS.identifier, Literal(refid), L))
     g.add((R, RDF.type, BIBO.Document, L))
     manual = False
@@ -115,7 +115,9 @@ def storeref(ref, aux=None):
         g.add((R, BIBO.isbn, Literal(isbn), L))
     # TODO: Rubrics
     # TODO: keywords
-    g.add((R, BIBFRAME["count"], Literal(ref["count"]), L))
+    count = ref.get("count", None)
+    if count is not None:
+        g.add((R, BIBFRAME["count"], Literal(ref["count"]), L))
     if callable(aux):
         aux(g, R, C)
     s.commit()

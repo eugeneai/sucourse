@@ -83,15 +83,31 @@ def canonize(ref, pos):
 def reflisrecords(ref, pos=VALUABLE_POS, npos=BAD_POS, number=20, labels=[],
                   comments=None):
     filtered, words, tagged = canonize(ref, pos=pos)
+
+#    import pudb; pu.db
+
     for rec in query(filtered, number=number):
-        del rec["__RAW__"]
-        del rec['__PARTS__']
-        if comments is not None:
-            rec["comments"] = comments
-        if labels:
-            rec['labels'] = labels
-        # print(rec["count"])
-        yield rec
+        if rec is not None:
+            del rec["__RAW__"]
+            del rec['__PARTS__']
+            if comments is not None:
+                rec["comments"] = comments
+            if labels:
+                rec['labels'] = labels
+            # print(rec["count"])
+            rec["db"] = "IRCAT"
+            yield rec
+    for rec in query(filtered, number=number, DB="ELEC"):
+        if rec is not None:
+            del rec["__RAW__"]
+            del rec['__PARTS__']
+            if comments is not None:
+                rec["comments"] = comments
+            if labels:
+                rec['labels'] = labels
+            rec["db"] = "ELEC"
+            # print(rec["count"])
+            yield rec
 
 
 def refsinjson(JSON):
@@ -123,10 +139,18 @@ def refsinjson(JSON):
 
 
 def refauthor(ref, connector='~'):
-    fn, name = ref.get('author', '')
-    np = name.split()
-    np = [fn] + ['{}.'.format(n[0]) for n in np]
-    return '~'.join(np)
+    # pprint(ref)
+    author = ref.get('author', None)
+    if author is not None:
+        if len(author) == 2:
+            fn, name = author
+            np = name.split()
+            np = [fn] + ['{}.'.format(n[0]) for n in np]
+            return '~'.join(np)
+        else:
+            return author[0].strip()
+    else:
+        return ""
 
 
 FIELD_POST_RE = re.compile(r'([0-9]+(-[а-я]+)?)\s([A-Za-zА-Яа-я]+\.?)')
@@ -168,17 +192,30 @@ def reflistwithcounts(JSON):
         for dt in dts:
             # print("-------------------")
             storeref(dt)
-            c1 = dt['count']
+            c1 = dt.get('count', None)
+            if c1 is None: # Reference by URL
+                ref = dt
+                break
             if c1 > c:  # prefer one with greatest count
                 ref = dt
                 c = c1
             elif c1 == c:
-                if int(dt['year']) > int(ref['year']):  # prefer new one
-                    ref = dt
+                try:
+                    if int(dt['year']) > int(ref['year']):  # prefer new one
+                        ref = dt
+                except KeyError:
+                    pass
 
         dt = ref
+        if dt is None:
+            yield None, None, None, None
+            break
         issue = refinedissue(dt)
-        s = "{}~--~{}~экз.".format(issue, dt['count'])
+        count = dt.get("count", None)
+        if count is not None:
+            s = "{}~--~{}~экз.".format(issue, dt['count'])
+        else:
+            s = "{}~Неог.".format(issue)
         author = refauthor(dt)
         if author:
             s = author + '~' + s
@@ -187,7 +224,7 @@ def reflistwithcounts(JSON):
             label = dt['title'][:10]
 
         # pprint(dt)
-        label = label.lower().translate(TRANSLIT) + dt['year']
+        label = label.lower().translate(TRANSLIT) + dt.get('year', 'NoYear')
         label = "ref:"+label
         comments = dt.get('comments', None)
         labels = dt.get('labels', [])
