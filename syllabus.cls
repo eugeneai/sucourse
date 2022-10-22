@@ -439,7 +439,7 @@
 
 \NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}\input{\syl@layout@id-layout.tex}}
 
-\NewDocumentEnvironment{cwtitle}{}{
+\NewDocumentEnvirзфмonment{cwtitle}{}{
   \begin{titlepage}
 }
 { \syl@make@title

@@ -74,7 +74,7 @@ def processing_triple_rec_json(ch, method, properties, JSON):
             comments = ''
         latex = r'\item {}{}{}'.format(ref, labels, comments).strip()
         struct = {"rec": ref, "labels": labels, "comments": comments}
-        msg = {"for_id": iden, "latex": latex, "ref_id": dt["ref_id"]}
+        msg = {"for_id": iden, "latex": latex, "ref_id": dt["ref_id"], 'db':dt["db"]}
         # print("DT:", msg)
         msg.update(struct)
         ch.basic_publish(exchange=EXCHANGE_NAME,
