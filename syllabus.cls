@@ -41,7 +41,7 @@
     linkcolor=black,
     filecolor=black,
     urlcolor=black,
-    pdftitle={Рабочая программа курса ИМИТ ИГУ},
+    % pdftitle={Рабочая программа курса ИМИТ ИГУ},
     % pdfpagemode=FullScreen,
     }
 
@@ -100,21 +100,41 @@
      Ligatures=TeX,
      Numbers=Lining]
 
+\newlength{\sec@parindent}
 
      \RedeclareSectionCommand[%
-     font=\large\rmfamily\bfseries
+     font=\large\rmfamily\bfseries,
+     indent=\sec@parindent
      ]{section}
      \RedeclareSectionCommand[%
-     font=\rmfamily\bfseries
+     font=\rmfamily\bfseries,
+     indent=\sec@parindent
      ]{subsection}
      \RedeclareSectionCommand[%
-     font=\normalsize\rmfamily\bfseries
+     font=\normalsize\rmfamily\bfseries,
+     indent=\sec@parindent
      ]{subsubsection}
      \RedeclareSectionCommand[%
-     font=\normalsize\rmfamily\bfseries
+     font=\normalsize\rmfamily\bfseries,
+     indent=\sec@parindent
      ]{paragraph}
      \DeclareTOCStyleEntry{dottedtocline}{section}
+     % \DeclareSectionCommand[%
+     % font={\normalsize\rmfamily\bfseries\itshape},
+     % indent=\sec@parindent,
+     % afterskip=1.5ex plus .2ex,
+     % beforeskip=-3.25ex plus -1ex minus -.2ex,
+     % level=5,
+     % tocindent=7.0em,
+     % tocnumwidth=4.1em,
+     % toclevel=5,
+     % tocstyle=section,
+     % counterwithin=subsubsection
+     % ]{subdivision}
 
+\newcommand{\subdivision}[1]{\paragraph{\itshape #1}\par}
+
+\newcommand{\setsectionparindent}[1]{\setlength{\sec@parindent}{#1}}
 
 % \renewcommand\sectionlinesformat[4]{%
 %   \@hangfrom{\hskip #2#3}{\MakeUppercase{#4}}%
@@ -316,11 +336,11 @@
 
 \AtBeginDocument{
   %\@input{\jobname.syll}
-  \luadirect{syll.prev = syll.tbl.load('\jobname-content.lua')}
+  %\luadirect{syll.prev = syll.tbl.load('\jobname-content.lua')}
 }
 
 \AtEndDocument{
-  \luadirect{syll.tbl.save(syll.content, '\jobname-content.lua')}
+  %\luadirect{syll.tbl.save(syll.content, '\jobname-content.lua')}
 }
 
 \def\syll@rerun{\par{\color{red}Требуется повторный запуск \LuaLaTeX}}
@@ -439,7 +459,7 @@
 
 \NewDocumentCommand{\syllayout}{O{}m}{\gdef\syl@layout@id{#2}\input{\syl@layout@id-layout.tex}}
 
-\NewDocumentEnvirзфмonment{cwtitle}{}{
+\NewDocumentEnvironment{cwtitle}{}{
   \begin{titlepage}
 }
 { \syl@make@title
@@ -524,13 +544,9 @@
 \institute{НЕ УКАЗАН ИНСТИТУТ ИЛИ ФАКУЛЬТЕТ}{АББР}{Директор}{И.И.~Иванов}{ГОРОД N}
 \chair{НЕ УКАЗАНА КАФЕДРА}{КАФ}
 \newcommand{\personalworktechniquesubsection}{\syl@personalworktechniquesubsection@content}
-
-
-AtBeginDocument{
-  \luadirect{syll.Item:connectMQ()}
-}
-
-
-AtEndDocument {
-  \luadirect{syll:Item:disconnMQ()}
-}
+% AtBeginDocument{
+%   \luadirect{syll.Item:connectMQ()}
+% }
+% AtEndDocument {
+%   \luadirect{syll:Item:disconnMQ()}
+% }

@@ -1,6 +1,6 @@
 -- json = require("json")
 -- tbl = require("table.save-0.94.lua")
-mq = require("rabbitmqstomp.lua")
+-- mq = require("rabbitmqstomp.lua")
 
 ALL = {}
 
